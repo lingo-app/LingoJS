@@ -1,6 +1,13 @@
 {
-  "name": "Lingojs",
+  "name": "lingo",
   "version": "0.1.0",
+  "homepage": "https://github.com/thenounproject/lingojs",
+  "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lingo/lingojs.git"
+  },
+  "bugs:": "https://github.com/lingo/lingojs/issues",
   "scripts": {
     "test": "mocha",
     "docs": "cd docs-website && ./run",
