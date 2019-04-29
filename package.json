@@ -1,5 +1,6 @@
 {
-  "name": "lingo",
+  "name": "lingo-sdk",
+  "description": "Lingo API wrapper",
   "version": "0.1.0",
   "homepage": "https://github.com/thenounproject/lingojs",
   "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
