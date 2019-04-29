@@ -5,7 +5,7 @@ const Lingo = function() {};
 
 Lingo.prototype.Error = LingoError;
 
-Lingo.prototype.baseURL = "https://api.lingoapp.com/alpha";
+Lingo.prototype.baseURL = "https://api.lingoapp.com/1";
 
 function parseJSONResponse(body) {
   if (body.success === true) {
