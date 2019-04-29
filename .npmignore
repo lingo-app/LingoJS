@@ -1,0 +1,21 @@
+test_config.js
+node_modules
+.npm
+npm-debug.log
+
+# jest
+coverage
+
+# mac
+.DS_Store
+
+# docs
+_vendor
+_site
+.sass-cache
+_external
+.jekyll-metadata
+.bundle
+
+docs
+docs-website
