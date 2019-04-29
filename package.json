@@ -2,13 +2,13 @@
   "name": "lingo-sdk",
   "description": "Lingo API wrapper",
   "version": "0.1.1",
-  "homepage": "https://github.com/thenounproject/lingojs",
+  "homepage": "https://github.com/lingo-app/lingojs",
   "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
   "repository": {
     "type": "git",
-    "url": "git://github.com/lingo/lingojs.git"
+    "url": "git://github.com/lingo-app/lingojs.git"
   },
-  "bugs:": "https://github.com/lingo/lingojs/issues",
+  "bugs:": "https://github.com/lingo-app/lingojs/issues",
   "scripts": {
     "test": "mocha",
     "docs": "cd docs-website && ./run",
