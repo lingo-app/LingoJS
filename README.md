@@ -6,4 +6,4 @@ Please keep in mind that this package is currently intended for server side use 
 
 ## Documentation
 
-All documentation is on the [Lingo Developers site](http://developer.lingoapp.com/lingojs).
+All documentation can be found on the [Lingo Developers site](http://developer.lingoapp.com/lingojs).
