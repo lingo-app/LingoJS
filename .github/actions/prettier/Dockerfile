@@ -1,9 +1,9 @@
 FROM node:10
 
 LABEL "version"="1.0.0"
-LABEL "repository"="https://github.com/thenounproject/lingo-api"
-LABEL "homepage"="https://github.com/thenounproject/"
-LABEL "maintainer"="Noun Project <developers@thenounproject.com>"
+LABEL "repository"="https://github.com/lingo-app/develper-docs"
+LABEL "homepage"="https://github.com/lingo-app/developer-docs"
+LABEL "maintainer"="Lingo <info@lingoapp.com>"
 
 LABEL "com.github.actions.name"="GitHub Action for prettier"
 LABEL "com.github.actions.description"="Validate the code formatting with prettier."
