@@ -1,6 +1,6 @@
 {
   "unreleased": [
-    "Add fetchItemsInSection for autopaging if limit is over 200",
+    "Add fetchAllItemsInSection",
     "Deprecate and rename fetchAssetsForHeading to fetchItemsForSection"
   ]
 }
