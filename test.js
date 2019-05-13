@@ -2,13 +2,16 @@ const lingo = require("./index");
 const assert = require("assert");
 const config = require("./test_config");
 
-lingo.baseURL = "https://api-test.lingoapp.com/1";
+
 
 let validConfig = (config.spaceID,
-config.apiToken,
-config.kitID,
-config.sectionID);
+  config.apiToken,
+  config.kitID,
+  config.sectionID,
+  config.baseURL);
 assert(validConfig, "missing config attributes requires to run tests");
+
+lingo.baseURL = config.baseURL
 
 it("Should fail to authenticate with invalid space", () => {
   lingo.setup(0, config.apiToken);
@@ -114,7 +117,27 @@ it("Should download asset file", () => {
   });
 });
 
-it("Should fetch assets under header by id", () => {
+it("Should fetch items in section with autopage", () => {
+  setup();
+  return new Promise((resolve, reject) => {
+    lingo
+      .fetchSection(config.sectionID, 0, 1, 0)
+      .then(section => {
+        lingo.fetchItemsInSection(section.uuid, 0, 100)
+          .then(items => {
+            assert(items.length === section.counts.items, `Unexpected item count with auto paging ${items.length} / ${section.counts.items}`);
+            resolve(section)
+          }).catch(err => {
+            reject(err)
+          });
+      }).catch(err => {
+        reject(err)
+      })
+  })
+
+});
+
+it("Should fetch items under header by id: deprecated", () => {
   setup();
   return lingo
     .fetchAssetsForHeading(config.sectionID, config.headingID, 0)
@@ -123,10 +146,19 @@ it("Should fetch assets under header by id", () => {
     });
 });
 
+it("Should fetch items under header by id", () => {
+  setup();
+  return lingo
+    .fetchItemsForHeading(config.sectionID, config.headingID, 0)
+    .then(result => {
+      assert(result.length === 2, "Unexpected item count under heading");
+    });
+});
+
 it("Should fetch assets under header by name", () => {
   setup();
   return lingo
-    .fetchAssetsForHeading(config.sectionID, config.headingName, 0)
+    .fetchItemsForHeading(config.sectionID, config.headingName, 0)
     .then(result => {
       assert(result.length === 2, "Unexpected item count under heading");
       return result;
