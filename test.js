@@ -123,7 +123,7 @@ it("Should fetch items in section with autopage", () => {
     lingo
       .fetchSection(config.sectionID, 0, 1, 0)
       .then(section => {
-        lingo.fetchItemsInSection(section.uuid, 0, 100)
+        lingo.fetchAllItemsInSection(section.uuid, section.version)
           .then(items => {
             assert(items.length === section.counts.items, `Unexpected item count with auto paging ${items.length} / ${section.counts.items}`);
             resolve(section)

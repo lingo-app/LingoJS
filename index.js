@@ -63,7 +63,7 @@ Lingo.prototype.fetchKit = function (id, include = "use_versions") {
  * @param {integer} version the version number of the kit to fetch
  * @returns {Promise} Success returns a list of sections and headers
  */
-Lingo.prototype.fetchKitOutline = function (id, version) {
+Lingo.prototype.fetchKitOutline = function (id, version = 0) {
   let path = `/kits/${id}/outline?v=${version}`;
   return this.call("GET", path).then(res => {
     return res.kit_version.sections;
@@ -78,7 +78,7 @@ Lingo.prototype.fetchKitOutline = function (id, version) {
  * @param {integer} page the page of items
  * @returns {Promise} A promise resolving the section and the items matching the page/limit
  */
-Lingo.prototype.fetchSection = function (id, version, page = 1, limit = 50) {
+Lingo.prototype.fetchSection = function (id, version = 0, page = 1, limit = 50) {
   let path = `/sections/${id}`;
   let v = version;
   let params = { qs: { v, page, limit } };
@@ -88,9 +88,9 @@ Lingo.prototype.fetchSection = function (id, version, page = 1, limit = 50) {
 };
 
 /**
- * Helper function to fetch items in a section, automatically paging if needed.
+ * Utility function to fetch all items in a section, automatically paging if needed.
  *
- * The API limits fetches to 200. This function automatically pages until the desired limit is reached.
+ * The API limits fetches to 200. This function recursively calls fetchSection until all items have been retrieved.
  * To page manually, use `fetchSection`
  *
  * @param {uuid} id the section uuid
@@ -98,21 +98,20 @@ Lingo.prototype.fetchSection = function (id, version, page = 1, limit = 50) {
  * @param {integer} limit The max number of items to fetch
  * @returns {Promise} A promise resolving the section and the items matching the page/limit
  */
-Lingo.prototype.fetchItemsInSection = function (id, version, limit = 200) {
+Lingo.prototype.fetchAllItemsInSection = function (id, version = 0) {
   return new Promise((resolve, reject) => {
     let page = 1;
-    let _limit = limit
+    const limit = 200 // API Enforces <= 200
     let results = [];
 
     const self = this;
     function fetch() {
       self
-        .fetchSection(id, version, page, _limit)
+        .fetchSection(id, version, page, limit)
         .then(section => {
           const items = section.items
           results = [...results, ...items]
-          _limit = limit - results.length
-          if (items.length == 0 || _limit == 0 || !section.has_more) {
+          if (items.length < limit) {
             return resolve(results);
           }
           page += 1;
@@ -130,7 +129,7 @@ Lingo.prototype.fetchItemsInSection = function (id, version, limit = 200) {
 Lingo.prototype.fetchAssetsForHeading = function (
   sectionId,
   headingId,
-  version
+  version = 0
 ) {
   console.error("fetchAssetsForHeading() is deprecated, please use fetchItemsForHeading()")
   return this.fetchItemsForHeading(sectionId, headingId, version)
@@ -150,7 +149,7 @@ Lingo.prototype.fetchAssetsForHeading = function (
 Lingo.prototype.fetchItemsForHeading = function (
   sectionId,
   headingId,
-  version
+  version = 0
 ) {
   return new Promise((resolve, reject) => {
     let page = 1;
