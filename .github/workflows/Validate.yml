@@ -1,0 +1,10 @@
+name: Validate
+on: push
+jobs:
+  master:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Prettier
+        uses: ./.github/actions/prettier
