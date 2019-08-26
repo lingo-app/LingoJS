@@ -2,11 +2,12 @@ const lingo = require("./index");
 const assert = require("assert");
 const config = require("./test_config");
 
-let validConfig = (config.spaceID,
-config.apiToken,
-config.kitID,
-config.sectionID,
-config.baseURL);
+let validConfig =
+  (config.spaceID,
+  config.apiToken,
+  config.kitID,
+  config.sectionID,
+  config.baseURL);
 assert(validConfig, "missing config attributes requires to run tests");
 
 lingo.baseURL = config.baseURL;
@@ -126,9 +127,7 @@ it("Should fetch items in section with autopage", () => {
           .then(items => {
             assert(
               items.length === section.counts.items,
-              `Unexpected item count with auto paging ${items.length} / ${
-                section.counts.items
-              }`
+              `Unexpected item count with auto paging ${items.length} / ${section.counts.items}`
             );
             resolve(section);
           })
