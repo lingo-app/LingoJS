@@ -8,11 +8,10 @@
     "type": "git",
     "url": "git://github.com/lingo-app/lingojs.git"
   },
+  "main": "src/index.js",
   "bugs:": "https://github.com/lingo-app/lingojs/issues",
   "scripts": {
     "test": "mocha",
-    "docs": "cd docs-website && ./run",
-    "docs:build": "cd docs-website && ./build",
     "prettier": "prettier --check \"*.js\"",
     "prettify": "prettier --write \"*.js\""
   },

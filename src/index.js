@@ -1,9 +1,12 @@
-const LingoError = require("./lingoError");
 const request = require("request");
+const LingoError = require("./lingoError");
+const Types = require("./types");
 
-const Lingo = function() {};
+const Lingo = function () {};
 
 Lingo.prototype.Error = LingoError;
+Lingo.prototype.AssetType = Types.AssetType;
+Lingo.prototype.ItemType = Types.ItemType;
 
 Lingo.prototype.baseURL = "https://api.lingoapp.com/1";
 
@@ -16,7 +19,7 @@ function parseJSONResponse(body) {
     console.log("Response is missing success flag " + body);
     throw new LingoError({
       code: LingoError.Code.unknown,
-      message: "Unexpected server response"
+      message: "Unexpected server response",
     });
   }
 }
@@ -26,16 +29,16 @@ function parseJSONResponse(body) {
  * @param {integer} spaceID The id of your Lingo space
  * @param {string} token An API token for your space
  */
-Lingo.prototype.setup = function(spaceID, token) {
-  this.auth = "Basic " + new Buffer(spaceID + ":" + token).toString("base64");
+Lingo.prototype.setup = function (spaceID, token) {
+  this.auth = "Basic " + Buffer.from(spaceID + ":" + token).toString("base64");
 };
 
 /**
  * Fetch all kits in your space
  * @returns {Promise} Success returns a list of kit objects
  */
-Lingo.prototype.fetchKits = function() {
-  return this.call("GET", "/kits").then(res => {
+Lingo.prototype.fetchKits = function () {
+  return this.call("GET", "/kits").then((res) => {
     return res.kits;
   });
 };
@@ -49,9 +52,9 @@ Lingo.prototype.fetchKits = function() {
  * - `null`: don't include any versions
  * @returns {Promise} Success returns a kit
  */
-Lingo.prototype.fetchKit = function(id, include = "use_versions") {
+Lingo.prototype.fetchKit = function (id, include = "use_versions") {
   let path = `/kits/${id}/?options=${include}`;
-  return this.call("GET", path).then(res => {
+  return this.call("GET", path).then((res) => {
     return res.kit;
   });
 };
@@ -62,9 +65,9 @@ Lingo.prototype.fetchKit = function(id, include = "use_versions") {
  * @param {integer} version the version number of the kit to fetch
  * @returns {Promise} Success returns a list of sections and headers
  */
-Lingo.prototype.fetchKitOutline = function(id, version = 0) {
+Lingo.prototype.fetchKitOutline = function (id, version = 0) {
   let path = `/kits/${id}/outline?v=${version}`;
-  return this.call("GET", path).then(res => {
+  return this.call("GET", path).then((res) => {
     return res.kit_version.sections;
   });
 };
@@ -77,11 +80,16 @@ Lingo.prototype.fetchKitOutline = function(id, version = 0) {
  * @param {integer} page the page of items
  * @returns {Promise} A promise resolving the section and the items matching the page/limit
  */
-Lingo.prototype.fetchSection = function(id, version = 0, page = 1, limit = 50) {
+Lingo.prototype.fetchSection = function (
+  id,
+  version = 0,
+  page = 1,
+  limit = 50
+) {
   let path = `/sections/${id}`;
   let v = version;
   let params = { qs: { v, page, limit } };
-  return this.call("GET", path, params).then(res => {
+  return this.call("GET", path, params).then((res) => {
     return res.section;
   });
 };
@@ -97,7 +105,7 @@ Lingo.prototype.fetchSection = function(id, version = 0, page = 1, limit = 50) {
  * @param {integer} limit The max number of items to fetch
  * @returns {Promise} A promise resolving the section and the items matching the page/limit
  */
-Lingo.prototype.fetchAllItemsInSection = function(id, version = 0) {
+Lingo.prototype.fetchAllItemsInSection = function (id, version = 0) {
   return new Promise((resolve, reject) => {
     let page = 1;
     const limit = 200; // API Enforces <= 200
@@ -107,7 +115,7 @@ Lingo.prototype.fetchAllItemsInSection = function(id, version = 0) {
     function fetch() {
       self
         .fetchSection(id, version, page, limit)
-        .then(section => {
+        .then((section) => {
           const items = section.items;
           results = [...results, ...items];
           if (items.length < limit) {
@@ -116,7 +124,7 @@ Lingo.prototype.fetchAllItemsInSection = function(id, version = 0) {
           page += 1;
           fetch();
         })
-        .catch(err => {
+        .catch((err) => {
           reject(err);
         });
     }
@@ -124,7 +132,7 @@ Lingo.prototype.fetchAllItemsInSection = function(id, version = 0) {
   });
 };
 
-Lingo.prototype.fetchAssetsForHeading = function(
+Lingo.prototype.fetchAssetsForHeading = function (
   sectionId,
   headingId,
   version = 0
@@ -144,7 +152,7 @@ Lingo.prototype.fetchAssetsForHeading = function(
  *
  * Note: If using the heading string, the first heading with that string will be used. UUID is recommended.
  */
-Lingo.prototype.fetchItemsForHeading = function(
+Lingo.prototype.fetchItemsForHeading = function (
   sectionId,
   headingId,
   version = 0
@@ -164,7 +172,7 @@ Lingo.prototype.fetchItemsForHeading = function(
     function fetch() {
       self
         .fetchSection(sectionId, version, page, 200)
-        .then(res => {
+        .then((res) => {
           const items = res.items;
           const count = items.length;
           if (count == 0) {
@@ -183,7 +191,7 @@ Lingo.prototype.fetchItemsForHeading = function(
           page += 1;
           fetch();
         })
-        .catch(err => {
+        .catch((err) => {
           reject(err);
         });
     }
@@ -200,7 +208,7 @@ Lingo.prototype.fetchItemsForHeading = function(
  * @param {integer} limit The max number of results per page
  * @returns {Promise} Returns the results, grouped by section.
  */
-Lingo.prototype.searchAssetsInKit = function(
+Lingo.prototype.searchAssetsInKit = function (
   kitID,
   version,
   query,
@@ -213,15 +221,15 @@ Lingo.prototype.searchAssetsInKit = function(
   return this.call("GET", path, params);
 };
 
-Lingo.prototype.downloadAsset = function(uuid, type = null) {
+Lingo.prototype.downloadAsset = function (uuid, type = null) {
   let path = `/assets/${uuid}/download`;
   const req = this._requestParams("GET", path, {
     qs: { type },
     json: false,
-    encoding: null
+    encoding: null,
   });
-  return new Promise(function(resolve, reject) {
-    request(req, function(err, response, body) {
+  return new Promise(function (resolve, reject) {
+    request(req, function (err, response, body) {
       if (body) {
         contentType = response.caseless.get("Content-Type");
         if (contentType.indexOf("json") >= 0) {
@@ -241,22 +249,22 @@ Lingo.prototype.downloadAsset = function(uuid, type = null) {
   });
 };
 
-Lingo.prototype._requestParams = function(method, path, more) {
+Lingo.prototype._requestParams = function (method, path, more) {
   let req = {
     uri: this.baseURL + path,
     method: method,
     json: true,
     headers: {},
-    ...more
+    ...more,
   };
   req.headers.Authorization = this.auth;
   return req;
 };
 
-Lingo.prototype.call = function(method, path, more = {}) {
+Lingo.prototype.call = function (method, path, more = {}) {
   const req = this._requestParams(method, path, more);
-  return new Promise(function(resolve, reject) {
-    request(req, function(err, response, body) {
+  return new Promise(function (resolve, reject) {
+    request(req, function (err, response, body) {
       if (body) {
         try {
           resolve(parseJSONResponse(body));

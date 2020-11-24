@@ -41,7 +41,7 @@ LingoError.Code = {
   itemAlreadyExists: 3201,
   itemNotAccepted: 3202,
 
-  featureUnavailable: 7104
+  featureUnavailable: 7104,
 };
 
 module.exports = LingoError;
