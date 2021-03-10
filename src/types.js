@@ -8,12 +8,13 @@ const AssetType = {
   tiff: "TIFF",
   color: "COLOR",
   textStyle: "TEXT_STYLE",
+  // Sketchw
   sketchLayer: "SKETCH_LAYER",
   sketchSymbol: "SKETCH_SYMBOL",
   sketchLayerStyle: "SKETCH_LAYER_STYLE",
   sketchTextStyle: "SKETCH_TEXT_STYLE",
-  // Generic
-  ai: "AI",
+  // Documents
+  txt: "TXT",
   docx: "DOCX",
   dotx: "DOTX",
   indd: "INDD",
@@ -23,7 +24,13 @@ const AssetType = {
   pages: "PAGES",
   potx: "POTX",
   pptx: "PPTX",
+  // Design
+  ai: "AI",
   psd: "PSD",
+  // Motion
+  mov: "MOV",
+  mp4: "MP4",
+  lottie: "LOTTIE",
 };
 
 const ItemType = {

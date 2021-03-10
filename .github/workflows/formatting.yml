@@ -1,0 +1,26 @@
+on:
+  push:
+    branches:
+      - "*"
+      - "!master"
+name: Development
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install
+        run:  npm install
+      - name: Lint
+        run: npm run lint
+      - name: Formatting
+        run: npm run check-format
+      - name: Test
+        run: npm run test

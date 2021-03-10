@@ -1,7 +1,7 @@
 {
   "name": "lingo-sdk",
   "description": "Lingo API wrapper",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "homepage": "https://github.com/lingo-app/lingojs",
   "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
   "repository": {
@@ -11,14 +11,21 @@
   "main": "src/index.js",
   "bugs:": "https://github.com/lingo-app/lingojs/issues",
   "scripts": {
-    "test": "mocha",
-    "prettier": "prettier --check \"*.js\"",
-    "prettify": "prettier --write \"*.js\""
+    "test": "mocha \"./test/unitTests.js\"",
+    "integration-test": "mocha \"./test/integrationTests.js\"",
+    "check-format": "prettier --check \"./**/*.js\"",
+    "format": "prettier --write \"./**/*.js\"",
+    "lint": "./node_modules/.bin/eslint './src/**/*.js'"
   },
   "dependencies": {
-    "request": "2.88"
+    "lodash": "^4.17.21",
+    "node-fetch": "^2.6.1",
+    "query-string": "^6.14.1"
   },
   "devDependencies": {
-    "mocha": "^5.2.0"
+    "eslint": "^7.21.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "mocha": "^8.3.1",
+    "prettier": "^2.2.1"
   }
 }

@@ -9,5 +9,5 @@ module.exports = {
   sectionID: "",
   assetID: "",
   headingID: "",
-  headingName: ""
+  headingName: "",
 };
