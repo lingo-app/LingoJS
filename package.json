@@ -11,7 +11,6 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
-  "type": "module",
   "license": "MIT",
   "main": "dist/index.js",
   "bugs:": "https://github.com/lingo-app/lingojs/issues",
