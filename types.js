@@ -1,4 +1,10 @@
-export const AssetType = {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ItemType = exports.AssetType = void 0;
+var AssetType = {
   png: "PNG",
   jpg: "JPG",
   gif: "GIF",
@@ -30,14 +36,15 @@ export const AssetType = {
   // Motion
   mov: "MOV",
   mp4: "MP4",
-  lottie: "LOTTIE",
+  lottie: "LOTTIE"
 };
-
-export const ItemType = {
+exports.AssetType = AssetType;
+var ItemType = {
   asset: "asset",
   heading: "heading",
   note: "inline_note",
   supportingImage: "supporting_image",
   codeSnippet: "code_snippet",
-  guide: "guide",
+  guide: "guide"
 };
+exports.ItemType = ItemType;

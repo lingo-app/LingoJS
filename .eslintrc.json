@@ -1,5 +1,6 @@
 {
   "root": true,
+  "parser": "babel-eslint",
   "plugins": ["prettier"],
   "env": { "browser": false, "node": true, "es6": true },
   "parserOptions": {

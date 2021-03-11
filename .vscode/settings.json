@@ -5,7 +5,8 @@
     "**/.svn": true,
     "**/.hg": true,
     "**/CVS": true,
-    "**/.DS_Store": true
+    "**/.DS_Store": true,
+    "**/node_modules": true,
     // "**/_site": true,
     // "**/_vendor": true,
     // "**/.bundle": true,

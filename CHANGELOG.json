@@ -1,5 +1,8 @@
 {
-  "unreleased": [],
+  "unreleased": [
+    "Add support for write APIs",
+    "Overall refactor to improve tooling and code organization"
+  ],
   "0.1.2": [
     "Add fetchAllItemsInSection",
     "Deprecate and rename fetchAssetsForHeading to fetchItemsForSection"

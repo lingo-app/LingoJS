@@ -2,18 +2,65 @@
  * The integration tests makes actual API calls
  * This is intended for use in development environments only
  */
-
-const assert = require("assert").strict;
-const lingo = require("../src/index");
+import { ReadStream } from "fs";
+import { strict as assert } from "assert";
+import lingo, { AssetType, ItemType, LingoError } from "../src/index";
+import { getUploadData, parseFilePath, resolveFilePath } from "../src/utils";
 
 describe("Library exports", () => {
   it("Makes the Error object availble", () => {
-    assert.equal(lingo.Error.Code.unknown, 1);
+    assert.equal(LingoError.Code.unknown, 1);
   });
 
   it("Makes the type objects availble", () => {
-    assert.equal(lingo.ItemType.heading, "heading");
-    assert.equal(lingo.AssetType.jpg, "JPG");
+    assert.equal(ItemType.heading, "heading");
+    assert.equal(AssetType.jpg, "JPG");
+  });
+});
+
+describe("File utils", () => {
+  const fileName = "Beer.svg";
+
+  it("should parse the file url", () => {
+    const { filename, extension } = parseFilePath("/path/to/" + fileName);
+    assert.equal(filename, "Beer");
+    assert.equal(extension, "svg");
+  });
+
+  it("should return path if already resolved", () => {
+    const expected = process.cwd() + "/" + fileName;
+    const filePath = resolveFilePath(expected);
+    assert.equal(filePath, expected);
+  });
+
+  it("should resolve relative path to cwd", () => {
+    const filePath = resolveFilePath("./" + fileName);
+    const expected = process.cwd() + "/" + fileName;
+    assert.equal(filePath, expected);
+  });
+
+  it("should resolve relative path with directory", () => {
+    const filePath = resolveFilePath("./files/" + fileName);
+    const expected = process.cwd() + "/files/" + fileName;
+    assert.equal(filePath, expected);
+  });
+
+  it("should resolve relative path with parent directory", () => {
+    const filePath = resolveFilePath("../" + fileName);
+    let dir = process.cwd().split("/");
+    dir.pop();
+    const expected = dir.join("/") + "/" + fileName;
+    assert.equal(filePath, expected);
+  });
+
+  it("should load file and determine upload data", () => {
+    const filePath = __dirname + "/" + fileName;
+    const { file, metadata } = getUploadData(filePath);
+    assert(file instanceof ReadStream, `Expected file to be a buffer ${file}`);
+    assert.deepEqual(metadata, {
+      name: "Beer",
+      type: "svg",
+    });
   });
 });
 
@@ -22,6 +69,16 @@ describe("Requests params", () => {
     const { url, qs } = lingo._requestParams("GET", "/", { qs: { key: "value" } });
     assert(url.indexOf("?key=value") > 0, `Url doesn't contain query string ${url}`);
     assert(qs == undefined);
+  });
+
+  it("error if data and formData are provided", () => {
+    assert.throws(() => lingo._requestParams("GET", "/", { data: {}, formData: {} }));
+  });
+
+  it("Should strigify json data", () => {
+    const data = { key: "value" };
+    const { body } = lingo._requestParams("GET", "/", { data });
+    assert.equal(body, JSON.stringify(data));
   });
 
   it("Should include a client header", () => {

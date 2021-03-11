@@ -1,9 +1,14 @@
-class LingoError extends Error {
-  constructor(json) {
-    super(json.message || "An unexpected error occured");
-    this.code = json.code || 1;
-    this.details = json.details;
-    this.recovery = json.recover;
+export default class LingoError extends Error {
+  constructor(code, message, details = {}, recovery = {}) {
+    super(message || "An unexpected error occured");
+    this.code = code || 1;
+    this.details = details;
+    this.recovery = recovery;
+  }
+
+  static from(json) {
+    const { code, message, details, recovery } = json;
+    return new LingoError(code, message, details, recovery);
   }
 }
 
@@ -43,5 +48,3 @@ LingoError.Code = {
 
   featureUnavailable: 7104,
 };
-
-module.exports = LingoError;
