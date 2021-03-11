@@ -8,11 +8,15 @@
     "type": "git",
     "url": "git://github.com/lingo-app/lingojs.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "type": "module",
-  "main": "src/index.js",
+  "license": "MIT",
+  "main": "dist/index.js",
   "bugs:": "https://github.com/lingo-app/lingojs/issues",
   "scripts": {
-    "build": "babel src/ --out-dir . --ignore __tests__",
+    "build": "babel src/ --out-dir ./dist --ignore __tests__",
     "test": "mocha \"./test/unitTests.js\" --require @babel/register",
     "integration-test": "mocha \"./test/integrationTests.js\" --require @babel/register",
     "check-format": "prettier --check \"./**/*.js\"",

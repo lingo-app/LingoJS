@@ -1,0 +1,33 @@
+on:
+  push:
+    branches:
+      - "master"
+name: Master
+jobs:
+  test:
+    name: Test & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install
+        run: npm install
+      - name: Lint
+        run: npm run lint
+      - name: Formatting
+        run: npm run check-format
+      - name: Test
+        run: npm run test
+      - name: Build
+        run: npm run build
+      - name: Deploy
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > .npmrc
+          npm publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

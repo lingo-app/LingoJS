@@ -3,6 +3,7 @@ testConfig.js
 node_modules
 .npm
 npm-debug.log
+dist
 
 # jest
 coverage
