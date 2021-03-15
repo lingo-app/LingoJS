@@ -167,18 +167,24 @@ class Lingo {
     return await this.call("GET", path, params);
   }
 
-  async downloadAsset(uuid, type = null) {
+  async getAssetDownloadUrl(uuid, type = undefined) {
     let path = `/assets/${uuid}/download`;
-    const { url, ...options } = this._requestParams("GET", path, {
-      qs: { type },
-      // Overwrite the json content type
-      headers: { "Content-Type": null },
+    const res = await this.call("GET", path, {
+      qs: { type, response: "json" },
     });
+    return res.url;
+  }
 
-    const res = await fetch(url, options);
-    if (res.headers.get("content-type") == "application/json") {
-      const json = await res.json();
-      return await parseJSONResponse(json);
+  async downloadAsset(uuid, type = null) {
+    const downloadUrl = await this.getAssetDownloadUrl(uuid, type);
+
+    const res = await fetch(downloadUrl);
+    if (res.status != 200) {
+      // Most likely an s3 error
+      const errStr = await res.text();
+      throw new LingoError(LingoError.Code.unknown, "An error occurred downloading the asset", {
+        rawError: errStr,
+      });
     } else {
       return await res.buffer();
     }

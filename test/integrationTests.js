@@ -39,7 +39,7 @@ describe("Authentication failures", () => {
   });
 });
 
-describe.skip("Read requests", () => {
+describe("Read requests", () => {
   before(() => {
     lingo.setup(config.spaceID, config.apiToken);
   });
@@ -76,7 +76,7 @@ describe.skip("Read requests", () => {
   });
 
   it("Should fetch search results", async () => {
-    const results = await lingo.searchAssetsInKit(config.kitID, 0, (query = "logo"));
+    const results = await lingo.searchAssetsInKit(config.kitID, 0, "logo");
 
     assert(results, "expected sections");
     assert(results.query === "logo", "expected query to match");
@@ -93,6 +93,11 @@ describe.skip("Read requests", () => {
         `Expected error code 3100, got ${err.code}`
       );
     }
+  });
+
+  it("Should get asset download url", async () => {
+    const result = await lingo.getAssetDownloadUrl(config.assetID);
+    assert(result.indexOf("s3.amazon.com"), `Unexpected download url ${result}`);
   });
 
   it("Should download asset file", async () => {
