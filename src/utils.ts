@@ -2,37 +2,41 @@ import fs from "fs";
 import path from "path";
 import LingoError from "./lingoError";
 
-export function parseFilePath(filePath) {
+export function parseFilePath(filePath: string): { filename: string; extension: string } {
   const extension = path.extname(filePath),
     filename = path.basename(filePath, extension);
   return { filename, extension: extension.replace(".", "") };
 }
 
-export function resolveFilePath(filePath) {
+export function resolveFilePath(filePath: string): string {
   if (filePath && filePath.startsWith(".")) {
     return path.resolve(process.cwd(), filePath);
   }
   return filePath;
 }
 
-export function getUploadData(file, data = {}) {
-  let name = data.name;
-  let type = data.type;
-  let fileData;
+type UploadData = {
+  name?: string;
+  type?: string;
+};
 
-  if (typeof file == "string") {
-    const filePath = resolveFilePath(file);
-    const { filename, extension } = parseFilePath(file);
-    name = name || filename;
-    type = type || extension;
-    fileData = fs.createReadStream(filePath);
-  } else {
-    fileData = file;
-  }
+export function getUploadData(
+  file: string,
+  data?: UploadData
+): { file: fs.ReadStream; metadata: UploadData } {
+  let name = data?.name;
+  let type = data?.type;
+  let fileData: any;
+
+  const filePath = resolveFilePath(file);
+  const { filename, extension } = parseFilePath(file);
+  name = name || filename;
+  type = type || extension;
+  fileData = fs.createReadStream(filePath);
 
   if (!type) {
     throw new LingoError(
-      LingoError.Code.invalidParams,
+      LingoError.Code.InvalidParams,
       "Unable to determine file type from path. Provide type in the data object or provide a filename a valid extension"
     );
   }
@@ -46,13 +50,13 @@ export function getUploadData(file, data = {}) {
   };
 }
 
-export function parseJSONResponse(body) {
+export function parseJSONResponse(body: any) {
   if (body.success === true) {
     return body.result;
   } else if (body.success === false) {
     throw LingoError.from(body.error);
   } else {
     console.error("Response is missing success flag " + body);
-    throw new LingoError(LingoError.Code.unknown, "Unexpected server response");
+    throw new LingoError(LingoError.Code.Unknown, "Unexpected server response");
   }
 }

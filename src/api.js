@@ -19,7 +19,6 @@ class Lingo {
    */
   setup(spaceID, token) {
     this.auth = "Basic " + Buffer.from(spaceID + ":" + token).toString("base64");
-    return this.name;
   }
 
   /**

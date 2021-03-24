@@ -9,12 +9,12 @@ import { getUploadData, parseFilePath, resolveFilePath } from "../src/utils";
 
 describe("Library exports", () => {
   it("Makes the Error object availble", () => {
-    assert.equal(LingoError.Code.unknown, 1);
+    assert.equal(LingoError.Code.Unknown, 1);
   });
 
   it("Makes the type objects availble", () => {
-    assert.equal(ItemType.heading, "heading");
-    assert.equal(AssetType.jpg, "JPG");
+    assert.equal(ItemType.Heading, "heading");
+    assert.equal(AssetType.JPG, "JPG");
   });
 });
 
@@ -66,9 +66,8 @@ describe("File utils", () => {
 
 describe("Requests params", () => {
   it("Should append query string if provided", () => {
-    const { url, qs } = lingo._requestParams("GET", "/", { qs: { key: "value" } });
+    const { url } = lingo._requestParams("GET", "/", { qs: { key: "value" } });
     assert(url.indexOf("?key=value") > 0, `Url doesn't contain query string ${url}`);
-    assert(qs == undefined);
   });
 
   it("error if data and formData are provided", () => {
