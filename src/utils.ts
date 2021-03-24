@@ -24,15 +24,11 @@ export function getUploadData(
   file: string,
   data?: UploadData
 ): { file: fs.ReadStream; metadata: UploadData } {
-  let name = data?.name;
-  let type = data?.type;
-  let fileData: any;
-
-  const filePath = resolveFilePath(file);
-  const { filename, extension } = parseFilePath(file);
-  name = name || filename;
-  type = type || extension;
-  fileData = fs.createReadStream(filePath);
+  const filePath = resolveFilePath(file),
+    { filename, extension } = parseFilePath(file),
+    name = data?.name || filename,
+    type = data?.type || extension,
+    fileData = fs.createReadStream(filePath);
 
   if (!type) {
     throw new LingoError(

@@ -47,7 +47,7 @@ describe("File utils", () => {
 
   it("should resolve relative path with parent directory", () => {
     const filePath = resolveFilePath("../" + fileName);
-    let dir = process.cwd().split("/");
+    const dir = process.cwd().split("/");
     dir.pop();
     const expected = dir.join("/") + "/" + fileName;
     assert.equal(filePath, expected);
