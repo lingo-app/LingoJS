@@ -24,7 +24,7 @@ class Lingo {
    * @returns A list of kit objects
    */
   async fetchKits(): Promise<any[]> {
-    const res = await this.call("GET", "/kits");
+    const res = await this.callAPI("GET", "/kits");
     return res.kits;
   }
 
@@ -39,7 +39,7 @@ class Lingo {
    */
   async fetchKit(id: string, include = "use_versions"): Promise<any> {
     const path = `/kits/${id}/?options=${include}`;
-    const res = await this.call("GET", path);
+    const res = await this.callAPI("GET", path);
     return res.kit;
   }
 
@@ -51,7 +51,7 @@ class Lingo {
    */
   async fetchKitOutline(id: string, version = 0): Promise<any[]> {
     const path = `/kits/${id}/outline?v=${version}`;
-    const res = await this.call("GET", path);
+    const res = await this.callAPI("GET", path);
     return res.kit_version.sections;
   }
 
@@ -66,7 +66,7 @@ class Lingo {
   async fetchSection(sectionId: string, version = 0, page = 1, limit = 50): Promise<any> {
     const path = `/sections/${sectionId}`,
       params = { qs: { v: version, page, limit } };
-    const res = await this.call("GET", path, params);
+    const res = await this.callAPI("GET", path, params);
     return res.section;
   }
 
@@ -78,8 +78,8 @@ class Lingo {
    *
    * @param sectionId the section uuid
    * @param version the version number of the section to fetch
-   * @param {integer} limit The max number of items to fetch
-   * @returns {Promise} A promise resolving the section and the items matching the page/limit
+   * @param limit The max number of items to fetch
+   * @returns A promise resolving the section and the items matching the page/limit
    */
   async fetchAllItemsInSection(sectionId: string, version = 0): Promise<any[]> {
     const limit = 200; // API Enforces <= 200
@@ -117,7 +117,7 @@ class Lingo {
     let found = false;
     const results = [];
 
-    function isMatch(item) {
+    function isMatch(item: { uuid: string; type: ItemType; data?: { content?: string } }) {
       return (
         item.type === ItemType.Heading &&
         (item.data.content === headingId || item.uuid === headingId)
@@ -148,12 +148,12 @@ class Lingo {
 
   /**
    * Search the items in a kit.
-   * @param {uuid} kitID The uuid of the kit to search
-   * @param {integer} version The version to search
-   * @param {string} query A search query to filter by
-   * @param {integer} page For paging resutls
-   * @param {integer} limit The max number of results per page
-   * @returns {Promise} Returns the results, grouped by section.
+   * @param kitID The uuid of the kit to search
+   * @param version The version to search
+   * @param query A search query to filter by
+   * @param page For paging resutls
+   * @param limit The max number of results per page
+   * @returns Returns the results, grouped by section.
    */
   async searchAssetsInKit(
     kitID: string,
@@ -164,19 +164,32 @@ class Lingo {
   ): Promise<any> {
     const path = `/kits/${kitID}/search`,
       params = { qs: { v: version, query, page, limit } };
-    return await this.call("GET", path, params);
+    return await this.callAPI("GET", path, params);
   }
 
-  async getAssetDownloadUrl(uuid: string, type?: string): Promise<string> {
-    const path = `/assets/${uuid}/download`;
-    const res = await this.call("GET", path, {
+  /**
+   * Prepare the file and get a url to download it
+   *
+   * @param id The uuid of the asset
+   * @param type The type of filecut to donwload, defaults to original
+   * @returns A url to download the prepared file
+   */
+  async getAssetDownloadUrl(id: string, type?: string): Promise<string> {
+    const path = `/assets/${id}/download`;
+    const res = await this.callAPI("GET", path, {
       qs: { type, response: "json" },
     });
     return res.url;
   }
 
-  async downloadAsset(uuid: string, type?: string): Promise<Buffer> {
-    const downloadUrl = await this.getAssetDownloadUrl(uuid, type);
+  /**
+   *
+   * @param id The uuid of the asset
+   * @param type The type of filecut to donwload, defaults to original
+   * @returns A buffer with the file data
+   */
+  async downloadAsset(id: string, type?: string): Promise<Buffer> {
+    const downloadUrl = await this.getAssetDownloadUrl(id, type);
     const res = await fetch(downloadUrl);
     if (res.status != 200) {
       // Most likely an s3 error
@@ -197,7 +210,7 @@ class Lingo {
    * @returns The new kit
    */
   async createKit(name: string): Promise<any> {
-    const res = await this.call("POST", "/kits", {
+    const res = await this.callAPI("POST", "/kits", {
       data: {
         name,
       },
@@ -210,7 +223,7 @@ class Lingo {
    * @returns The new section
    */
   async createSection(kitId: string, name: string): Promise<any> {
-    const res = await this.call("POST", "/sections", {
+    const res = await this.callAPI("POST", "/sections", {
       data: {
         kit_uuid: kitId,
         name,
@@ -231,7 +244,7 @@ class Lingo {
         "Text is required when creating a heading"
       );
     }
-    const res = await this.call("POST", "/items", {
+    const res = await this.callAPI("POST", "/items", {
       data: {
         section_uuid: sectionId,
         kit_uuid: kitId,
@@ -297,7 +310,8 @@ class Lingo {
     const formData = new FormData();
     formData.append("asset", fileData);
     formData.append("json", JSON.stringify(json));
-    const { url, ...options } = this._requestParams("POST", "/assets", {
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+    const { url, ...options } = this.requestParams("POST", "/assets", {
       headers: formData.getHeaders(),
       formData,
     });
@@ -311,7 +325,7 @@ class Lingo {
   // MARK : Making Requests
   // -------------------------------------------------------------------------------
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  _requestParams(method: string, path: string, options?: any): any {
+  requestParams(method: string, path: string, options?: any): any {
     const { qs, headers, data, formData, ...rest } = options || {};
 
     let url = this.baseURL + path;
@@ -351,9 +365,9 @@ class Lingo {
     };
   }
 
-  async call(method: string, path: string, more = {}): Promise<any> {
-    const { url, ...options } = this._requestParams(method, path, more);
-    const response = await fetch(url, options);
+  async callAPI(method: string, path: string, options = {}): Promise<any> {
+    const { url, ..._options } = this.requestParams(method, path, options);
+    const response = await fetch(url, _options);
     const json = await response.json();
     return parseJSONResponse(json);
   }

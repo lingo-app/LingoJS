@@ -66,22 +66,22 @@ describe("File utils", () => {
 
 describe("Requests params", () => {
   it("Should append query string if provided", () => {
-    const { url } = lingo._requestParams("GET", "/", { qs: { key: "value" } });
+    const { url } = lingo.requestParams("GET", "/", { qs: { key: "value" } });
     assert(url.indexOf("?key=value") > 0, `Url doesn't contain query string ${url}`);
   });
 
   it("error if data and formData are provided", () => {
-    assert.throws(() => lingo._requestParams("GET", "/", { data: {}, formData: {} }));
+    assert.throws(() => lingo.requestParams("GET", "/", { data: {}, formData: {} }));
   });
 
   it("Should strigify json data", () => {
     const data = { key: "value" };
-    const { body } = lingo._requestParams("GET", "/", { data });
+    const { body } = lingo.requestParams("GET", "/", { data });
     assert.equal(body, JSON.stringify(data));
   });
 
   it("Should include a client header", () => {
-    const { headers } = lingo._requestParams("GET", "/");
+    const { headers } = lingo.requestParams("GET", "/");
     assert(headers["x-lingo-client"] == "LingoJS");
   });
 });
