@@ -12,16 +12,14 @@
   "main": "dist/index.js",
   "bugs:": "https://github.com/lingo-app/lingojs/issues",
   "scripts": {
-    "compile": "tsc",
-    "build": "babel src/ --out-dir ./dist --ignore __tests__",
+    "build": "tsc",
     "test": "mocha \"./test/unitTests.ts\" --require ts-node/register",
-    "integration-test": "mocha \"./test/integrationTests.js\" --require ts-node/register",
-    "check-format": "prettier --check \"./**/*.js\"",
-    "format": "prettier --write \"./**/*.js\"",
+    "integration-test": "mocha \"./test/integrationTests.ts\" --require ts-node/register",
+    "check-format": "prettier --check \"./**/*.ts\"",
+    "format": "prettier --write \"./**/*.ts\"",
     "lint": "./node_modules/.bin/eslint './{src,test}/**/*.{js,ts}'"
   },
   "dependencies": {
-    "babel-eslint": "^10.1.0",
     "form-data": "^4.0.0",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
@@ -29,10 +27,6 @@
     "regenerator-runtime": "^0.13.7"
   },
   "devDependencies": {
-    "@babel/cli": "^7.13.10",
-    "@babel/core": "^7.13.10",
-    "@babel/preset-env": "^7.13.10",
-    "@babel/register": "^7.13.8",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.14.35",
     "@typescript-eslint/eslint-plugin": "^4.19.0",

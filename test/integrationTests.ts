@@ -12,7 +12,8 @@ import { strict as assert } from "assert";
 import lingo, { AssetType, ItemType, LingoError } from "../src/index";
 import config from "./testConfig";
 
-let validConfig = (config.spaceID, config.apiToken, config.kitID, config.sectionID, config.baseURL);
+const validConfig =
+  (config.spaceID, config.apiToken, config.kitID, config.sectionID, config.baseURL);
 assert(validConfig, "missing config attributes requires to run tests");
 
 lingo.baseURL = config.baseURL;
@@ -24,7 +25,7 @@ describe("Authentication failures", () => {
       await lingo.fetchKits();
       assert(false, "Request unexpectedly succeeded");
     } catch (err) {
-      assert.equal(err.code, LingoError.Code.unauthorized, err);
+      assert.equal(err.code, LingoError.Code.Unauthorized, err);
     }
   });
 
@@ -34,7 +35,7 @@ describe("Authentication failures", () => {
       await lingo.fetchKits();
       assert(false, "Request unexpectedly succeeded");
     } catch (err) {
-      assert(err.code === LingoError.Code.unauthorized, err);
+      assert(err.code === LingoError.Code.Unauthorized, err);
     }
   });
 });
@@ -45,7 +46,7 @@ describe("Read requests", () => {
   });
 
   it("Should fetch kits", async () => {
-    let res = await lingo.fetchKits();
+    const res = await lingo.fetchKits();
     assert(res.length, "expected kits");
     assert(res[0].kit_uuid, "expected the kit to have a uuid");
   });
@@ -55,7 +56,7 @@ describe("Read requests", () => {
       await lingo.fetchKit("invalid-kit-uuid");
       assert(false, "Request unexpectedly succeeded");
     } catch (err) {
-      assert(err.code === LingoError.Code.kitNotFound, `Expected error code 1100, got ${err.code}`);
+      assert(err.code === LingoError.Code.KitNotFound, `Expected error code 1100, got ${err.code}`);
     }
   });
 
@@ -89,7 +90,7 @@ describe("Read requests", () => {
       assert(false, "Request unexpectedly succeeded");
     } catch (err) {
       assert(
-        err.code === LingoError.Code.assetNotFound,
+        err.code === LingoError.Code.AssetNotFound,
         `Expected error code 3100, got ${err.code}`
       );
     }
@@ -159,7 +160,7 @@ describe("Write requests", () => {
       it("Should create a heading", async () => {
         const heading = await lingo.createHeading(kit.kit_uuid, section.uuid, "Logos");
         assert.equal(heading.data.content, "Logos");
-        assert.equal(heading.type, ItemType.heading);
+        assert.equal(heading.type, ItemType.Heading);
         assert.equal(heading.section_uuid, section.uuid);
         assert.equal(heading.kit_uuid, kit.kit_uuid);
       });
@@ -167,7 +168,7 @@ describe("Write requests", () => {
       it("Should create an inline note", async () => {
         const note = await lingo.createNote(kit.kit_uuid, section.uuid, "A note about the logos");
         assert.equal(note.data.content, "A note about the logos");
-        assert.equal(note.type, ItemType.note);
+        assert.equal(note.type, ItemType.Note);
         assert.equal(note.section_uuid, section.uuid);
         assert.equal(note.kit_uuid, kit.kit_uuid);
       });
@@ -176,11 +177,11 @@ describe("Write requests", () => {
       // eslint-disable-next-line func-names
       it("Should create a asset from SVG file", async function () {
         this.timeout(20 * 1000);
-        let filePath = __dirname + "/Beer.svg";
+        const filePath = __dirname + "/Beer.svg";
         const item = await lingo.createAsset(filePath, kit.kit_uuid, section.uuid);
         const asset = item.asset;
-        assert.equal(item.type, ItemType.asset);
-        assert.equal(asset.type, AssetType.svg);
+        assert.equal(item.type, ItemType.Asset);
+        assert.equal(asset.type, AssetType.SVG);
         assert.equal(asset.name, "Beer");
       });
     });

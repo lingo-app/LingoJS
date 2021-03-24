@@ -284,7 +284,7 @@ class Lingo {
     file: string,
     kitId: string,
     sectionId: string,
-    data: { name?: string; type?: AssetType; notes?: string }
+    data?: { name?: string; type?: AssetType; notes?: string }
   ): Promise<any> {
     const { file: fileData, metadata } = getUploadData(file, data),
       json = _merge({}, metadata, data, {
@@ -310,6 +310,7 @@ class Lingo {
 
   // MARK : Making Requests
   // -------------------------------------------------------------------------------
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   _requestParams(method: string, path: string, options?: any): any {
     const { qs, headers, data, formData, ...rest } = options || {};
 

@@ -46,7 +46,7 @@ export function getUploadData(
   };
 }
 
-export function parseJSONResponse(body: any) {
+export function parseJSONResponse(body: Record<string, unknown>): any {
   if (body.success === true) {
     return body.result;
   } else if (body.success === false) {

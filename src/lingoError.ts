@@ -35,13 +35,6 @@ enum ErrorCode {
   FeatureUnavailable = 7104,
 }
 
-type JSONError = {
-  code: number;
-  message: string;
-  details?: Record<string, any>;
-  recovery?: Record<string, any>;
-};
-
 export default class LingoError extends Error {
   code: number;
   details: any;
@@ -56,7 +49,8 @@ export default class LingoError extends Error {
     this.recovery = recovery;
   }
 
-  static from(json: JSONError): LingoError {
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  static from(json: any): LingoError {
     const { code, message, details, recovery } = json;
     return new LingoError(code, message, details, recovery);
   }
