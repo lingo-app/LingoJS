@@ -207,6 +207,7 @@ class Lingo {
 
   /**
    * Create a new kit
+   * @param name The name of the kit
    * @returns The new kit
    */
   async createKit(name: string): Promise<any> {
@@ -220,9 +221,12 @@ class Lingo {
 
   /**
    * Create a new section
+   *
+   * @param kitId The uuid of the kit to create the section in
+   * @param name The name of the section
    * @returns The new section
    */
-  async createSection(kitId: string, name: string): Promise<any> {
+  async createSection(kitId: string, name?: string): Promise<any> {
     const res = await this.callAPI("POST", "/sections", {
       data: {
         kit_uuid: kitId,
@@ -259,6 +263,9 @@ class Lingo {
 
   /**
    * Create a new heading
+   * @param kitId The id of the kit to create the item in
+   * @param sectionId The id of the section to create the item in (must be in kit)
+   * @param text The text content of the heading
    * @returns The new item
    */
   async createHeading(kitId: string, sectionId: string, text: string): Promise<any> {
@@ -267,6 +274,9 @@ class Lingo {
 
   /**
    * Create a new inline note
+   * @param kitId The id of the kit to create the item in
+   * @param sectionId The id of the section to create the item in (must be in kit)
+   * @param text The text content of the note
    * @returns The new item
    */
   async createNote(kitId: string, sectionId: string, text: string): Promise<any> {
