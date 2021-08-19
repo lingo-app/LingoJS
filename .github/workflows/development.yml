@@ -9,18 +9,15 @@ jobs:
     name: Validate & Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - uses: actions/cache@v1
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          node-version: "14"
+          cache: yarn
       - name: Install
-        run: npm install
-      - name: Lint
-        run: npm run lint
-      - name: Formatting
-        run: npm run check-format
+        run: yarn
+      - name: Validate
+        run: yarn validate
       - name: Test
-        run: npm run test
+        run: yarn test

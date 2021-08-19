@@ -1,7 +1,7 @@
 export default {
   baseURL: "http://local.lingoapp.com:9000/1",
   spaceID: 2265,
-  apiToken: "NbujukaezEMN09G31MN39Ut3oBou00QLCQLoRjo1Tcg",
+  apiToken: "8t4B_2JFm4e-3iTHCR5UjsVGnWWHpUlIooKiZQdgSMM",
 
   kitID: "2D6AE4F2-B100-44B7-A5AB-3988B81A3397",
   sectionID: "A0F3E37B-937E-4A0E-9B70-E84B589498F4",

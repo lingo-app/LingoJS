@@ -8,7 +8,7 @@ export enum AssetType {
   TIFF = "TIFF",
   Color = "COLOR",
   TextStyle = "TEXT_STYLE",
-  // Sketchw
+  // Sketch
   SketchLayer = "SKETCH_LAYER",
   SketchSymbol = "SKETCH_SYMBOL",
   SketchLayerStyle = "SKETCH_LAYER_STYLE",
