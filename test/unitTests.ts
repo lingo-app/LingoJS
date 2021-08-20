@@ -82,6 +82,122 @@ describe("Requests params", () => {
 
   it("Should include a client header", () => {
     const { headers } = lingo.requestParams("GET", "/");
-    assert(headers["x-lingo-client"] == "LingoJS");
+    assert.equal(headers["x-lingo-client"], "LingoJS");
+  });
+});
+
+describe("Search", () => {
+  it("Should be a content query by default", () => {
+    const search = lingo.search();
+    assert.equal(search._queryType, "content");
+  });
+
+  it("Should filter to kits", () => {
+    const search = lingo.search().kits();
+    assert.equal(search._filters[0].type, "type");
+    assert.equal(search._filters[0].value, "kit");
+    assert.equal(search._queryType, "jump_to");
+  });
+
+  it("Should filter to sections", () => {
+    const search = lingo.search().sections();
+    assert.equal(search._filters[0].type, "type");
+    assert.equal(search._filters[0].value, "section");
+    assert.equal(search._queryType, "jump_to");
+  });
+
+  it("Should filter to headings", () => {
+    const search = lingo.search().headings();
+    assert.equal(search._filters[0].type, "type");
+    assert.equal(search._filters[0].value, "heading");
+    assert.equal(search._queryType, "jump_to");
+  });
+
+  it("Should set sort by", () => {
+    const search = lingo.search().sortBy("recent");
+    assert.equal(search._sort, "recent");
+  });
+
+  it("Should set sort by reverse", () => {
+    const search = lingo.search().sortBy("recent", true);
+    assert.equal(search._sort, "-recent");
+  });
+
+  it("Should not allow reverse relevance", () => {
+    assert.throws(() => lingo.search().sortBy("relevance", true));
+  });
+
+  it("Should set limit and offset", () => {
+    const search = lingo.search().limit(50).offset(100);
+    assert.equal(search._offset, 100);
+    assert.equal(search._limit, 50);
+  });
+
+  it("Should adjust offset to next page", () => {
+    const search = lingo.search().nextPage();
+    assert.equal(search._offset, 50);
+  });
+
+  it("Should add kit filter", () => {
+    const search = lingo.search().inKit("abc", 0);
+    assert.deepEqual(search._filters[0], { type: "kit", kit_uuid: "abc", version: 0 });
+  });
+
+  it("Should add type filter", () => {
+    const search = lingo.search().ofType("SVG");
+    assert.deepEqual(search._filters[0], { type: "type", value: "SVG" });
+  });
+
+  it("Should add keyword filter", () => {
+    const search = lingo.search().matchingKeyword("Logo");
+    assert.deepEqual(search._filters[0], { type: "keyword", value: "Logo" });
+  });
+
+  it("Should add tag filter", () => {
+    const search = lingo.search().withTag("brand");
+    assert.deepEqual(search._filters[0], { type: "tag", value: "brand" });
+  });
+
+  it("Should add orientation filter", () => {
+    const search = lingo.search().orientation("vertical");
+    assert.deepEqual(search._filters[0], { type: "orientation", value: "vertical" });
+  });
+
+  it("Should add after filter with Date", () => {
+    const search = lingo.search().after(new Date());
+    assert.equal(search._filters[0].type, "after");
+    assert.match(search._filters[0].date, /\d\d\d\d-\d\d?-\d\d?/);
+  });
+
+  it("Should add after filter with string", () => {
+    const search = lingo.search().after("2020-05-20");
+    assert.equal(search._filters[0].type, "after");
+    assert.equal(search._filters[0].date, "2020-05-20");
+  });
+
+  it("Should add after filter relative number of days", () => {
+    const search = lingo.search().after(30);
+    assert.equal(search._filters[0].type, "after");
+    assert.equal(search._filters[0].period, "day");
+    assert.equal(search._filters[0].length, 30);
+  });
+
+  it("Should add before filter with Date", () => {
+    const search = lingo.search().before(new Date());
+    assert.equal(search._filters[0].type, "before");
+    assert.match(search._filters[0].date, /\d\d\d\d-\d\d?-\d\d?/);
+  });
+
+  it("Should add before filter with string", () => {
+    const search = lingo.search().before("2020-05-20");
+    assert.equal(search._filters[0].type, "before");
+    assert.equal(search._filters[0].date, "2020-05-20");
+  });
+
+  it("Should add before filter relative number of days", () => {
+    const search = lingo.search().before(30);
+    assert.equal(search._filters[0].type, "before");
+    assert.equal(search._filters[0].period, "day");
+    assert.equal(search._filters[0].length, 30);
   });
 });

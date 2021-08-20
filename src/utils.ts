@@ -81,3 +81,17 @@ export function parseJSONResponse(body: Record<string, unknown>): any {
     throw new LingoError(LingoError.Code.Unknown, "Unexpected server response");
   }
 }
+
+export function encodeUnicode(value) {
+  // first we use encodeURIComponent to get percent-encoded UTF-8,
+  // then we convert the percent encodings into raw bytes which
+  // can be fed into btoa.
+  let str = value;
+  if (typeof value !== "string") str = JSON.stringify(str);
+  function toSolidBytes(_match, p1) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return String.fromCharCode(`0x${p1}` as any);
+  }
+  const binary = encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, toSolidBytes);
+  return btoa(binary);
+}

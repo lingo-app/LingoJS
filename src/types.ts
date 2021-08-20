@@ -137,4 +137,12 @@ export interface Asset {
   fileUpdated: string;
 }
 
-// export interface SearchResult {}
+export interface SearchResult {
+  total: number;
+  offset: number;
+  limit: number;
+  results: {
+    type: "item" | "section" | "kit";
+    object: Item | Kit | Section;
+  }[];
+}

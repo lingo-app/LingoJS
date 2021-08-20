@@ -6,6 +6,7 @@ import fetch from "node-fetch";
 import LingoError from "./lingoError";
 import { AssetType, ItemType, Kit, Section, Item } from "./types";
 import { getUploadData, parseJSONResponse } from "./utils";
+import { Search } from "./search";
 
 class Lingo {
   baseURL = "https://api.lingoapp.com/1";
@@ -105,12 +106,12 @@ class Lingo {
 
   /**
    * Fetch all items that fall under a given heading in a section
-   * @param sectionId the section uuid the heading is in
+   * @param sectionId the section id the heading is in
    * @param headingId the uuid or string name of the the heading
    * @param version the version number of the section to fetch
    * @returns A promise resolving an array of items that fall under the desired heading. Can be empty.
    *
-   * Note: If using the heading string, the first heading with that string will be used. UUID is recommended.
+   * Note: If using the heading string, the first heading with that string will be used. sectionID is recommended to target a specific heading.
    */
   async fetchItemsForHeading(sectionId: string, headingId: string, version = 0): Promise<Item[]> {
     let page = 1;
@@ -146,24 +147,11 @@ class Lingo {
   }
 
   /**
-   * Search the items in a kit.
-   * @param kitID The uuid of the kit to search
-   * @param version The version to search
-   * @param query A search query to filter by
-   * @param page For paging resutls
-   * @param limit The max number of results per page
-   * @returns Returns the results, grouped by section.
+   * Create a new search object to build and execute a search query
+   * @returns A new search object
    */
-  async searchAssetsInKit(
-    kitID: string,
-    version: number,
-    query: string,
-    page?: number,
-    limit?: number
-  ): Promise<any> {
-    const path = `/kits/${kitID}/search`,
-      params = { qs: { v: version, query, page, limit } };
-    return await this.callAPI("GET", path, params);
+  search(): Search {
+    return new Search();
   }
 
   /**
@@ -183,7 +171,7 @@ class Lingo {
 
   /**
    *
-   * @param id The uuid of the asset
+   * @param id The id of the asset
    * @param type The type of filecut to donwload, defaults to original
    * @returns A buffer with the file data
    */
