@@ -4,7 +4,7 @@ import QueryString from "query-string";
 import fetch from "node-fetch";
 
 import LingoError from "./lingoError";
-import { AssetType, ItemType } from "./types";
+import { AssetType, ItemType, Kit, Section, Item } from "./types";
 import { getUploadData, parseJSONResponse } from "./utils";
 
 class Lingo {
@@ -23,7 +23,7 @@ class Lingo {
    * Fetch all kits in your space
    * @returns A list of kit objects
    */
-  async fetchKits(): Promise<any[]> {
+  async fetchKits(): Promise<Kit[]> {
     const res = await this.callAPI("GET", "/kits");
     return res.kits;
   }
@@ -37,7 +37,7 @@ class Lingo {
    * - `null`: don't include any versions
    * @returns Success returns a kit
    */
-  async fetchKit(id: string, include = "use_versions"): Promise<any> {
+  async fetchKit(id: string, include = "use_versions"): Promise<Kit> {
     const path = `/kits/${id}/?options=${include}`;
     const res = await this.callAPI("GET", path);
     return res.kit;
@@ -63,7 +63,7 @@ class Lingo {
    * @param page the page of items
    * @returns A promise resolving the section and the items matching the page/limit
    */
-  async fetchSection(sectionId: string, version = 0, page = 1, limit = 50): Promise<any> {
+  async fetchSection(sectionId: string, version = 0, page = 1, limit = 50): Promise<Section> {
     const path = `/sections/${sectionId}`,
       params = { qs: { v: version, page, limit } };
     const res = await this.callAPI("GET", path, params);
@@ -81,7 +81,7 @@ class Lingo {
    * @param limit The max number of items to fetch
    * @returns A promise resolving the section and the items matching the page/limit
    */
-  async fetchAllItemsInSection(sectionId: string, version = 0): Promise<any[]> {
+  async fetchAllItemsInSection(sectionId: string, version = 0): Promise<Item[]> {
     const limit = 200; // API Enforces <= 200
     let page = 1,
       results = [];
@@ -98,7 +98,7 @@ class Lingo {
     }
   }
 
-  async fetchAssetsForHeading(sectionId: string, headingId: string, version = 0): Promise<any[]> {
+  async fetchAssetsForHeading(sectionId: string, headingId: string, version = 0): Promise<Item[]> {
     console.error("fetchAssetsForHeading() is deprecated, please use fetchItemsForHeading()");
     return await this.fetchItemsForHeading(sectionId, headingId, version);
   }
@@ -112,15 +112,14 @@ class Lingo {
    *
    * Note: If using the heading string, the first heading with that string will be used. UUID is recommended.
    */
-  async fetchItemsForHeading(sectionId: string, headingId: string, version = 0): Promise<any[]> {
+  async fetchItemsForHeading(sectionId: string, headingId: string, version = 0): Promise<Item[]> {
     let page = 1;
     let found = false;
     const results = [];
 
-    function isMatch(item: { uuid: string; type: ItemType; data?: { content?: string } }) {
+    function isMatch(item: Item) {
       return (
-        item.type === ItemType.Heading &&
-        (item.data.content === headingId || item.uuid === headingId)
+        item.type === ItemType.Heading && (item.data.content === headingId || item.id === headingId)
       );
     }
     // eslint-disable-next-line no-constant-condition
@@ -210,13 +209,13 @@ class Lingo {
    * @param name The name of the kit
    * @returns The new kit
    */
-  async createKit(name: string): Promise<any> {
+  async createKit(name: string): Promise<Kit> {
     const res = await this.callAPI("POST", "/kits", {
       data: {
         name,
       },
     });
-    return res.kit;
+    return res.kit as Kit;
   }
 
   /**
@@ -226,7 +225,7 @@ class Lingo {
    * @param name The name of the section
    * @returns The new section
    */
-  async createSection(kitId: string, name?: string): Promise<any> {
+  async createSection(kitId: string, name?: string): Promise<Section> {
     const res = await this.callAPI("POST", "/sections", {
       data: {
         kit_uuid: kitId,
@@ -241,7 +240,7 @@ class Lingo {
     kitId: string,
     sectionId: string,
     text?: string
-  ): Promise<any> {
+  ): Promise<Item> {
     if (!text) {
       throw new LingoError(
         LingoError.Code.InvalidParams,
@@ -268,7 +267,7 @@ class Lingo {
    * @param text The text content of the heading
    * @returns The new item
    */
-  async createHeading(kitId: string, sectionId: string, text: string): Promise<any> {
+  async createHeading(kitId: string, sectionId: string, text: string): Promise<Item> {
     return this._createTextItem(ItemType.Heading, kitId, sectionId, text);
   }
 
@@ -279,7 +278,7 @@ class Lingo {
    * @param text The text content of the note
    * @returns The new item
    */
-  async createNote(kitId: string, sectionId: string, text: string): Promise<any> {
+  async createNote(kitId: string, sectionId: string, text: string): Promise<Item> {
     return this._createTextItem(ItemType.Note, kitId, sectionId, text);
   }
 
@@ -308,7 +307,7 @@ class Lingo {
     kitId: string,
     sectionId: string,
     data?: { name?: string; type?: AssetType; notes?: string }
-  ): Promise<any> {
+  ): Promise<Item> {
     const { file: fileData, metadata } = getUploadData(file, data),
       json = _merge({}, metadata, data, {
         item: {
@@ -334,7 +333,7 @@ class Lingo {
 
   // MARK : Making Requests
   // -------------------------------------------------------------------------------
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
   requestParams(method: string, path: string, options?: any): any {
     const { qs, headers, data, formData, ...rest } = options || {};
 
@@ -375,6 +374,7 @@ class Lingo {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async callAPI(method: string, path: string, options = {}): Promise<any> {
     const { url, ..._options } = this.requestParams(method, path, options);
     const response = await fetch(url, _options);

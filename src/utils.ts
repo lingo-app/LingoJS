@@ -46,9 +46,34 @@ export function getUploadData(
   };
 }
 
+/**
+ * Normalizes response data into a more javascript friendly format by camelcaseing snake case to camel case and replacing some keys.
+ *
+ * @param object Any object
+ * @returns The object with normalized object keys
+ */
+function normalizeResponse(object) {
+  const convertKey = str =>
+    str
+      .replace("uuid", "id")
+      .replace(/([-_][a-z0-9])/g, group => group.toUpperCase().replace("-", "").replace("_", ""));
+  if (!object) return object;
+  if (Array.isArray(object)) {
+    return object.map(val => normalizeResponse(val));
+  }
+  if (typeof object === "object") {
+    return Object.keys(object).reduce((acc, key) => {
+      acc[convertKey(key)] = normalizeResponse(object[key]);
+      return acc;
+    }, {});
+  }
+  return object;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function parseJSONResponse(body: Record<string, unknown>): any {
   if (body.success === true) {
-    return body.result;
+    return normalizeResponse(body.result);
   } else if (body.success === false) {
     throw LingoError.from(body.error);
   } else {

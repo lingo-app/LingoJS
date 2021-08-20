@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 enum ErrorCode {
   Unknown = 1,
   ServerError = 99,
