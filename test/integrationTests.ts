@@ -9,7 +9,7 @@
  */
 
 import { strict as assert } from "assert";
-import lingo, { AssetType, ItemType, LingoError } from "../src/index";
+import lingo, { AssetType, ItemType, Kit, LingoError, Section } from "../src/index";
 import config from "./testConfig";
 
 const validConfig =
@@ -48,7 +48,7 @@ describe("Read requests", () => {
   it("Should fetch kits", async () => {
     const res = await lingo.fetchKits();
     assert(res.length, "expected kits");
-    assert(res[0].kit_uuid, "expected the kit to have a uuid");
+    assert(res[0].kitId, "expected the kit to have a uuid");
   });
 
   it("Should fail to find non-existent kit", async () => {
@@ -72,7 +72,7 @@ describe("Read requests", () => {
 
   it("Should fetch section and items", async () => {
     const section = await lingo.fetchSection(config.sectionID, 0);
-    assert(section.uuid === config.sectionID, "expected sections");
+    assert(section.id === config.sectionID, "expected sections");
     assert(section.items.length > 0, "expected items");
   });
 
@@ -108,7 +108,7 @@ describe("Read requests", () => {
 
   it("Should fetch items in section with autopage", async () => {
     const section = await lingo.fetchSection(config.sectionID, 0, 1, 0);
-    const items = await lingo.fetchAllItemsInSection(section.uuid, section.version);
+    const items = await lingo.fetchAllItemsInSection(section.id, section.version);
     assert(
       items.length === section.counts.items,
       `Unexpected item count with auto paging ${items.length} / ${section.counts.items}`
@@ -137,40 +137,40 @@ describe("Write requests", () => {
   });
 
   describe("Kit creation", async () => {
-    let kit;
+    let kit: Kit;
     before(async () => {
       kit = await lingo.createKit("My Kit");
     });
 
     it("Should create a kit", async () => {
       assert.equal(kit.name, "My Kit");
-      assert.equal(kit.space_id, config.spaceID);
+      assert.equal(kit.spaceId, config.spaceID);
     });
     describe("Kit content creation", async () => {
-      let section;
+      let section: Section;
       before(async () => {
-        section = await lingo.createSection(kit.kit_uuid, "My Kit");
+        section = await lingo.createSection(kit.kitId, "My Kit");
       });
 
       it("Should create section", async () => {
         assert(section.name, "My Section");
-        assert.equal(section.kit_uuid, kit.kit_uuid);
+        assert.equal(section.kitId, kit.kitId);
       });
 
       it("Should create a heading", async () => {
-        const heading = await lingo.createHeading(kit.kit_uuid, section.uuid, "Logos");
+        const heading = await lingo.createHeading(kit.kitId, section.id, "Logos");
         assert.equal(heading.data.content, "Logos");
         assert.equal(heading.type, ItemType.Heading);
-        assert.equal(heading.section_uuid, section.uuid);
-        assert.equal(heading.kit_uuid, kit.kit_uuid);
+        assert.equal(heading.sectionId, section.id);
+        assert.equal(heading.kitId, kit.kitId);
       });
 
       it("Should create an inline note", async () => {
-        const note = await lingo.createNote(kit.kit_uuid, section.uuid, "A note about the logos");
+        const note = await lingo.createNote(kit.kitId, section.id, "A note about the logos");
         assert.equal(note.data.content, "A note about the logos");
         assert.equal(note.type, ItemType.Note);
-        assert.equal(note.section_uuid, section.uuid);
-        assert.equal(note.kit_uuid, kit.kit_uuid);
+        assert.equal(note.sectionId, section.id);
+        assert.equal(note.kitId, kit.kitId);
       });
 
       // We need to accesst this to bump the timeout
@@ -178,7 +178,7 @@ describe("Write requests", () => {
       it("Should create a asset from SVG file", async function () {
         this.timeout(20 * 1000);
         const filePath = __dirname + "/Beer.svg";
-        const item = await lingo.createAsset(filePath, kit.kit_uuid, section.uuid);
+        const item = await lingo.createAsset(filePath, kit.kitId, section.id);
         const asset = item.asset;
         assert.equal(item.type, ItemType.Asset);
         assert.equal(asset.type, AssetType.SVG);

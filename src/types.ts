@@ -49,6 +49,7 @@ export interface Kit {
   name: string;
   description: string;
   kitId: string;
+  spaceId: number;
   shortId: string;
   useVersion: number;
   status: Status;

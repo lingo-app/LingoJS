@@ -52,7 +52,7 @@ class Lingo {
   async fetchKitOutline(id: string, version = 0): Promise<any[]> {
     const path = `/kits/${id}/outline?v=${version}`;
     const res = await this.callAPI("GET", path);
-    return res.kit_version.sections;
+    return res.kitVersion.sections;
   }
 
   /**
