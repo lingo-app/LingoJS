@@ -4,7 +4,7 @@ import QueryString from "query-string";
 import fetch from "node-fetch";
 
 import LingoError from "./lingoError";
-import { AssetType, ItemType, Kit, Section, Item } from "./types";
+import { AssetType, ItemType, Kit, Section, Item, KitOutline } from "./types";
 import { getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
 
@@ -48,12 +48,12 @@ class Lingo {
    * Fetch the outline for a kit
    * @param id the kit uuid
    * @param version the version number of the kit to fetch
-   * @returns Success returns a list of sections and headers
+   * @returns Success returns a version including a list of sections and headers
    */
-  async fetchKitOutline(id: string, version = 0): Promise<any[]> {
+  async fetchKitOutline(id: string, version = 0): Promise<KitOutline> {
     const path = `/kits/${id}/outline?v=${version}`;
     const res = await this.callAPI("GET", path);
-    return res.kitVersion.sections;
+    return res.kitVersion;
   }
 
   /**

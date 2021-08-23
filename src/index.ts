@@ -1,5 +1,3 @@
-// import "regenerator-runtime/runtime";
-
 import Lingo from "./api";
 
 export * from "./types";

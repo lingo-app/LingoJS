@@ -5,7 +5,7 @@
 import { ReadStream } from "fs";
 import { strict as assert } from "assert";
 import lingo, { AssetType, ItemType, LingoError } from "../src/index";
-import { getUploadData, parseFilePath, resolveFilePath } from "../src/utils";
+import { getUploadData, parseFilePath, resolveFilePath, parseJSONResponse } from "../src/utils";
 
 describe("Library exports", () => {
   it("Makes the Error object availble", () => {
@@ -61,6 +61,33 @@ describe("File utils", () => {
       name: "Beer",
       type: "svg",
     });
+  });
+});
+
+describe("JSON response parsing", () => {
+  it("Should throw if success is false", () => {
+    assert.throws(() =>
+      parseJSONResponse({ success: false, error: { code: 0, message: "Uh Oh!" } })
+    );
+  });
+  it("Should throw if invalid response", () => {
+    assert.throws(() => parseJSONResponse({}));
+  });
+
+  it("Should camel case keys", () => {
+    const res = parseJSONResponse({
+      success: true,
+      result: { object_id: 1, data: { object_name: "Lingo" } },
+    });
+    assert.deepEqual(res, { objectId: 1, data: { objectName: "Lingo" } });
+  });
+
+  it("Should replace instances of uuid with id", () => {
+    const res = parseJSONResponse({
+      success: true,
+      result: { uuid: "321", data: { parent_uuid: "123" } },
+    });
+    assert.deepEqual(res, { id: "321", data: { parentId: "123" } });
   });
 });
 

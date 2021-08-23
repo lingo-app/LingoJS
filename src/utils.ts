@@ -52,8 +52,8 @@ export function getUploadData(
  * @param object Any object
  * @returns The object with normalized object keys
  */
-function normalizeResponse(object) {
-  const convertKey = str =>
+function normalizeResponse(object: unknown) {
+  const convertKey = (str: string): string =>
     str
       .replace("uuid", "id")
       .replace(/([-_][a-z0-9])/g, group => group.toUpperCase().replace("-", "").replace("_", ""));
@@ -82,7 +82,8 @@ export function parseJSONResponse(body: Record<string, unknown>): any {
   }
 }
 
-export function encodeUnicode(value) {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+export function encodeUnicode(value: any): string {
   // first we use encodeURIComponent to get percent-encoded UTF-8,
   // then we convert the percent encodings into raw bytes which
   // can be fed into btoa.

@@ -75,6 +75,31 @@ export interface KitVersion {
   dateUpdated: string;
 }
 
+export interface KitOutline extends KitVersion {
+  sections: [KitOutlineSection];
+}
+
+export interface KitOutlineHeading {
+  id: string;
+  shortId: string;
+  displayOrder: number;
+  name: string;
+  version: number;
+}
+
+export interface KitOutlineSection {
+  id: string;
+  shortId: string;
+  name: string;
+  version: number;
+  counts: {
+    assets: number;
+    items: number;
+  };
+  displayOrder: number;
+  headers: [KitOutlineHeading];
+}
+
 export interface Section {
   id: string;
   shortId: string;
