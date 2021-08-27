@@ -1,7 +1,7 @@
 {
   "name": "@lingo-app/node",
   "description": "Lingo API wrapper",
-  "version": "1.0.1git",
+  "version": "1.0.1",
   "homepage": "https://github.com/lingo-app/lingojs",
   "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
   "repository": "https://github.com/lingo-app/lingojs",
