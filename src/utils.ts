@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import LingoError from "./lingoError";
+import btoa from "btoa";
 
 export function parseFilePath(filePath: string): { filename: string; extension: string } {
   const extension = path.extname(filePath),

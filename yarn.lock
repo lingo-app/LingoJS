@@ -71,11 +71,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@lingo-app/node@workspace:."
   dependencies:
+    "@types/btoa": ^1
     "@types/mocha": ^8.2.3
-    "@types/node": ^14.14.35
+    "@types/node": ^16.7.3
     "@types/node-fetch": ^2
     "@typescript-eslint/eslint-plugin": ^4.29.2
     "@typescript-eslint/parser": ^4.29.2
+    btoa: ^1.2.1
     eslint: ^7.32.0
     eslint-plugin-prettier: ^3.4.0
     form-data: ^4.0.0
@@ -135,6 +137,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/btoa@npm:^1":
+  version: 1.2.3
+  resolution: "@types/btoa@npm:1.2.3"
+  dependencies:
+    "@types/node": "*"
+  checksum: 76fff64a9a91639d124eaf36b6389af12c8717c81221d03524eadac056710a9d0aa076e99c553ec83c251cf215d8e38413c0f4e6fb6be36b0d761c5130e06d0f
+  languageName: node
+  linkType: hard
+
 "@types/json-schema@npm:^7.0.7":
   version: 7.0.9
   resolution: "@types/json-schema@npm:7.0.9"
@@ -166,10 +177,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^14.14.35":
-  version: 14.17.10
-  resolution: "@types/node@npm:14.17.10"
-  checksum: ec618cb3e0223e6707c97f88ab8525a2addecfa6dc7b7dfb9e6b56f144d8ac47083bfe3fd7a8040e5234f9b7d46c6a5c0bb24ed0129815b6efe82d0f4a55ba60
+"@types/node@npm:^16.7.3":
+  version: 16.7.3
+  resolution: "@types/node@npm:16.7.3"
+  checksum: 615d65c40131c7b987d9728d42835a35873117bc5840090bca9d3665ef4a32fd11522681c5a5babc6e2ed1ba27b7d57eb268d0a8a2125e3a4e926bf5f992aa69
   languageName: node
   linkType: hard
 
@@ -512,6 +523,15 @@ __metadata:
   version: 1.3.1
   resolution: "browser-stdout@npm:1.3.1"
   checksum: b717b19b25952dd6af483e368f9bcd6b14b87740c3d226c2977a65e84666ffd67000bddea7d911f111a9b6ddc822b234de42d52ab6507bce4119a4cc003ef7b3
+  languageName: node
+  linkType: hard
+
+"btoa@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "btoa@npm:1.2.1"
+  bin:
+    btoa: bin/btoa.js
+  checksum: afbf004fb1b1d530e053ffa66ef5bd3878b101c59d808ac947fcff96810b4452abba2b54be687adadea2ba9efc7af48b04228742789bf824ef93f103767e690c
   languageName: node
   linkType: hard
 
