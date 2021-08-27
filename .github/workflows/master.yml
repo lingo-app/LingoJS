@@ -31,7 +31,7 @@ jobs:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH }}
       - name: Deploy GITHUB
         run: |
-          yarn npm publish
+          yarn npm publish --tolerate-republish
         env:
           NPM_REGISTRY: https://npm.pkg.github.com
           NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
