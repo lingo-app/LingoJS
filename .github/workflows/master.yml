@@ -25,7 +25,7 @@ jobs:
         run: yarn build
       - name: Deploy NPM
         run: |
-          yarn npm publish --tolerate-republishgit
+          yarn npm publish --tolerate-republish
         env:
           NPM_REGISTRY: https://registry.npmjs.org/
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH }}
