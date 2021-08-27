@@ -18,7 +18,7 @@
     "integration-test": "mocha \"./test/integrationTests.ts\" --require ts-node/register",
     "validate": "prettier --check \"./**/*.ts\" && eslint './{src,test}/**/*.{js,ts}'",
     "format": "prettier --write \"./**/*.ts\"",
-    "postinstall": "yarn dlx @yarnpkg/sdks vscode"
+    "setup": "yarn dlx @yarnpkg/sdks vscode"
   },
   "dependencies": {
     "form-data": "^4.0.0",
