@@ -1,6 +1,6 @@
 // Copy this file and rename test_config.js
 // These values are required by tests to run againts the actual API
-module.exports = {
+export default {
   baseURL: "https://api.lingoapp.com/1",
   spaceID: 0,
   apiToken: "",
@@ -9,5 +9,5 @@ module.exports = {
   sectionID: "",
   assetID: "",
   headingID: "",
-  headingName: ""
+  headingName: "",
 };

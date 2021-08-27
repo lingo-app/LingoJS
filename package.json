@@ -1,25 +1,44 @@
 {
-  "name": "lingo-sdk",
+  "name": "@lingo-app/node",
   "description": "Lingo API wrapper",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "homepage": "https://github.com/lingo-app/lingojs",
   "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/lingo-app/lingojs.git"
+  "repository": "https://github.com/lingo-app/lingojs",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bugs:": "https://github.com/lingo-app/lingojs/issues",
   "scripts": {
-    "test": "mocha",
-    "docs": "cd docs-website && ./run",
-    "docs:build": "cd docs-website && ./build",
-    "prettier": "prettier --check \"*.js\"",
-    "prettify": "prettier --write \"*.js\""
+    "build": "tsc",
+    "test": "mocha \"./test/unitTests.ts\" --require ts-node/register",
+    "integration-test": "mocha \"./test/integrationTests.ts\" --require ts-node/register",
+    "validate": "prettier --check \"./**/*.ts\" && eslint './{src,test}/**/*.{js,ts}'",
+    "format": "prettier --write \"./**/*.ts\"",
+    "postinstall": "yarn dlx @yarnpkg/sdks vscode"
   },
   "dependencies": {
-    "request": "2.88"
+    "form-data": "^4.0.0",
+    "lodash": "^4.17.21",
+    "node-fetch": "^2.6.1",
+    "query-string": "^7.0.1",
+    "regenerator-runtime": "^0.13.9"
   },
   "devDependencies": {
-    "mocha": "^5.2.0"
+    "@types/mocha": "^8.2.3",
+    "@types/node": "^14.14.35",
+    "@types/node-fetch": "^2",
+    "@typescript-eslint/eslint-plugin": "^4.29.2",
+    "@typescript-eslint/parser": "^4.29.2",
+    "eslint": "^7.32.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "install": "^0.13.0",
+    "mocha": "^8.4.0",
+    "prettier": "^2.3.2",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
   }
 }

@@ -1,0 +1,29 @@
+on:
+  push:
+    branches:
+      - "master"
+name: Master
+jobs:
+  test:
+    name: Test & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+          cache: yarn
+      - name: Install
+        run: yarn
+      - name: Validate
+        run: yarn validate
+      - name: Test
+        run: yarn test
+      - name: Build
+        run: yarn build
+      - name: Deploy
+        run: |
+          yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

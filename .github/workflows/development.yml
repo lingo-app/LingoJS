@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+      - "*"
+      - "!master"
+name: Development
+jobs:
+  test:
+    name: Validate & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+          cache: yarn
+      - name: Install
+        run: yarn
+      - name: Validate
+        run: yarn validate
+      - name: Test
+        run: yarn test

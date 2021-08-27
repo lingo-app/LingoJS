@@ -1,7 +1,9 @@
 test_config.js
+testConfig.js
 node_modules
 .npm
 npm-debug.log
+dist
 
 # jest
 coverage
@@ -16,3 +18,12 @@ _site
 _external
 .jekyll-metadata
 .bundle
+
+# yarn
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
