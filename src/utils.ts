@@ -17,13 +17,13 @@ export function resolveFilePath(filePath: string): string {
 }
 
 type UploadData = {
-  name?: string;
-  type?: string;
+  name: string;
+  type: string;
 };
 
 export function getUploadData(
   file: string,
-  data?: UploadData
+  data?: Partial<UploadData>
 ): { file: fs.ReadStream; metadata: UploadData } {
   const filePath = resolveFilePath(file),
     { filename, extension } = parseFilePath(file),

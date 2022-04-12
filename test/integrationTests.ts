@@ -67,7 +67,7 @@ describe("Read requests", () => {
 
   it("Should fetch kit outline", async () => {
     const outline = await lingo.fetchKitOutline(config.kitID, 0);
-    assert(outline.length > 0, "expected versions");
+    assert(outline.sections.length > 0, "expected versions");
   });
 
   it("Should fetch section and items", async () => {
@@ -77,11 +77,10 @@ describe("Read requests", () => {
   });
 
   it("Should fetch search results", async () => {
-    const results = await lingo.searchAssetsInKit(config.kitID, 0, "logo");
+    const results = await lingo.search().inKit(config.kitID).matchingKeyword("logo").fetch();
 
     assert(results, "expected sections");
-    assert(results.query === "logo", "expected query to match");
-    assert(results.sections, "expected results");
+    assert(results.results, "expected results");
   });
 
   it("Should fail to download invalid asset", async () => {
