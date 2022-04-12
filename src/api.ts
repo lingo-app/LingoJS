@@ -1,3 +1,5 @@
+import fsPromises from "fs/promises";
+import fs from "fs";
 import FormData from "form-data";
 import _merge from "lodash/merge";
 import QueryString from "query-string";
@@ -268,6 +270,22 @@ class Lingo {
    */
   async createNote(kitId: string, sectionId: string, text: string): Promise<Item> {
     return this._createTextItem(ItemType.Note, kitId, sectionId, text);
+  }
+
+  /**
+   * Validate asset data to ensure it is valid for uploading
+   *
+   * @param file a filepath
+   * @param data An oject with additional optional metadata
+   * @returns The
+   */
+  async validateAsset(
+    file: string,
+    data: { name?: string; type?: AssetType; notes?: string }
+  ): Promise<{ name?: string; type: string; filepath: string }> {
+    const { file: stream, metadata } = getUploadData(file, data);
+    await fsPromises.access(stream.path);
+    return { ...metadata, filepath: stream.path as string };
   }
 
   /**

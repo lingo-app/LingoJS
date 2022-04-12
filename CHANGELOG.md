@@ -1,3 +1,5 @@
+# 1.0.1
+* Add `validateAsset`
 
 # 1.0
 * Add support for write APIs

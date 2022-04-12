@@ -62,6 +62,24 @@ describe("File utils", () => {
       type: "svg",
     });
   });
+
+  it("should validate the file", async () => {
+    const filePath = __dirname + "/" + fileName;
+    const { name, type } = await lingo.validateAsset(filePath, {});
+    assert.equal(name, "Beer");
+    assert.equal(type, "svg");
+  });
+
+  it("should fail to validate the invalid file", async () => {
+    const filePath = __dirname + "/not-" + fileName;
+    try {
+      await lingo.validateAsset(filePath, {});
+      throw new Error("Expected to fail");
+    } catch (e) {
+      assert.match(e.message, /no such file/);
+      // faile  d as expected
+    }
+  });
 });
 
 describe("JSON response parsing", () => {
