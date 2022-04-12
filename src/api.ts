@@ -1,5 +1,4 @@
 import fsPromises from "fs/promises";
-import fs from "fs";
 import FormData from "form-data";
 import _merge from "lodash/merge";
 import QueryString from "query-string";
