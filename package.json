@@ -1,7 +1,7 @@
 {
   "name": "@lingo-app/node",
   "description": "Lingo API wrapper",
-  "version": "1.0.5",
+  "version": "1.1.0-a1",
   "homepage": "https://github.com/lingo-app/lingojs",
   "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
   "repository": "https://github.com/lingo-app/lingojs",
@@ -10,9 +10,9 @@
   "types": "./dist/index.d.ts",
   "bugs:": "https://github.com/lingo-app/lingojs/issues",
   "scripts": {
-    "build": "tsc",
-    "test": "mocha \"./test/unitTests.ts\" --require ts-node/register",
-    "integration-test": "mocha \"./test/integrationTests.ts\" --require ts-node/register",
+    "build": "tsc --project tsconfig.build.json",
+    "test": "jest ./test/unitTests",
+    "integration-test": "jest ./test/integrationTests",
     "validate": "prettier --check \"./**/*.ts\" && eslint './{src,test}/**/*.{js,ts}'",
     "format": "prettier --write \"./**/*.ts\"",
     "setup": "yarn dlx @yarnpkg/sdks vscode"
@@ -26,18 +26,24 @@
     "regenerator-runtime": "^0.13.9"
   },
   "devDependencies": {
-    "@types/btoa": "^1",
-    "@types/mocha": "^8.2.3",
-    "@types/node": "^16.7.3",
-    "@types/node-fetch": "^2",
-    "@typescript-eslint/eslint-plugin": "^4.29.2",
-    "@typescript-eslint/parser": "^4.29.2",
-    "eslint": "^7.32.0",
-    "eslint-plugin-prettier": "^3.4.0",
+    "@types/btoa": "^1.2.3",
+    "@types/jest": "^28.1.3",
+    "@types/node": "^18.0.0",
+    "@types/node-fetch": "^2.6.2",
+    "@typescript-eslint/eslint-plugin": "^5.29.0",
+    "@typescript-eslint/parser": "^5.29.0",
+    "eslint": "^8.18.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "install": "^0.13.0",
-    "mocha": "^8.4.0",
-    "prettier": "^2.3.2",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.3"
-  }
+    "jest": "^28.1.1",
+    "prettier": "^2.7.1",
+    "ts-jest": "^28.0.5",
+    "ts-node": "^10.8.1",
+    "typescript": "4.5.5"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "globals": {}
+  },
+  "packageManager": "yarn@3.1.1"
 }

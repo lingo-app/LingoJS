@@ -1,5 +1,4 @@
-import fsPromises from "fs/promises";
-import fs from "fs";
+import { constants as fsConstants, promises as fsPromises } from "fs";
 import FormData from "form-data";
 import _merge from "lodash/merge";
 import QueryString from "query-string";
@@ -9,7 +8,6 @@ import LingoError from "./lingoError";
 import { AssetType, ItemType, Kit, Section, Item, KitOutline } from "./types";
 import { getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
-import { resolve } from "path/posix";
 
 class Lingo {
   baseURL = "https://api.lingoapp.com/1";
@@ -286,24 +284,19 @@ class Lingo {
   ): Promise<{ name?: string; type: string; filepath: string }> {
     const { file: stream, metadata } = getUploadData(file, data);
 
-    return new Promise((resolve, reject) => {
-      fs.access(stream.path, fs.constants.R_OK, err => {
-        if (err) {
-          reject(
-            new LingoError(
-              LingoError.Code.FileNotValid,
-              `
+    try {
+      await fsPromises.access(stream.path, fsConstants.R_OK);
+      return { ...metadata, filepath: stream.path as string };
+    } catch {
+      throw new LingoError(
+        LingoError.Code.FileNotValid,
+        `
 Unable to access asset file
   name: ${metadata.name}
   path: ${stream.path}
-       `
-            )
-          );
-        } else {
-          resolve({ ...metadata, filepath: stream.path as string });
-        }
-      });
-    });
+`
+      );
+    }
   }
 
   /**
@@ -351,7 +344,7 @@ Unable to access asset file
 
     const response = await fetch(url, options),
       _json = await response.json(),
-      res = parseJSONResponse(_json);
+      res = parseJSONResponse(_json as Record<string, unknown>);
     return res.item;
   }
 
@@ -403,7 +396,7 @@ Unable to access asset file
     const { url, ..._options } = this.requestParams(method, path, options);
     const response = await fetch(url, _options);
     const json = await response.json();
-    return parseJSONResponse(json);
+    return parseJSONResponse(json as Record<string, unknown>);
   }
 }
 

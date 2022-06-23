@@ -41,7 +41,7 @@ describe("Authentication failures", () => {
 });
 
 describe("Read requests", () => {
-  before(() => {
+  beforeAll(() => {
     lingo.setup(config.spaceID, config.apiToken);
   });
 
@@ -131,13 +131,13 @@ describe("Read requests", () => {
 });
 
 describe("Write requests", () => {
-  before(() => {
+  beforeAll(() => {
     lingo.setup(config.spaceID, config.apiToken);
   });
 
-  describe("Kit creation", async () => {
+  describe("Kit creation", () => {
     let kit: Kit;
-    before(async () => {
+    beforeEach(async () => {
       kit = await lingo.createKit("My Kit");
     });
 
@@ -145,9 +145,9 @@ describe("Write requests", () => {
       assert.equal(kit.name, "My Kit");
       assert.equal(kit.spaceId, config.spaceID);
     });
-    describe("Kit content creation", async () => {
+    describe("Kit content creation", () => {
       let section: Section;
-      before(async () => {
+      beforeEach(async () => {
         section = await lingo.createSection(kit.kitId, "My Kit");
       });
 
