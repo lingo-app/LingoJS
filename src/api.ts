@@ -283,7 +283,15 @@ class Lingo {
     data: { name?: string; type?: AssetType; notes?: string }
   ): Promise<{ name?: string; type: string; filepath: string }> {
     const { file: stream, metadata } = getUploadData(file, data);
-    await fsPromises.access(stream.path);
+    try {
+      await fsPromises.access(stream.path);
+    } catch {
+      throw Error(`
+Unable to access asset file
+  name: ${metadata.name}
+  path: ${stream.path}
+       `);
+    }
     return { ...metadata, filepath: stream.path as string };
   }
 
