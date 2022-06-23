@@ -76,7 +76,7 @@ describe("File utils", () => {
       await lingo.validateAsset(filePath, {});
       throw new Error("Expected to fail");
     } catch (e) {
-      assert.match(e.message, /no such file/);
+      assert.match(e.message, /Unable to access asset file/);
       // faile  d as expected
     }
   });
