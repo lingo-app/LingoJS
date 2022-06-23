@@ -8,6 +8,7 @@ import LingoError from "./lingoError";
 import { AssetType, ItemType, Kit, Section, Item, KitOutline } from "./types";
 import { getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
+import { resolve } from "path/posix";
 
 class Lingo {
   baseURL = "https://api.lingoapp.com/1";
@@ -283,16 +284,26 @@ class Lingo {
     data: { name?: string; type?: AssetType; notes?: string }
   ): Promise<{ name?: string; type: string; filepath: string }> {
     const { file: stream, metadata } = getUploadData(file, data);
-    try {
-      await fsPromises.access(stream.path);
-    } catch {
-      throw Error(`
+
+    return new Promise((resolve, reject) => {
+      fsPromises
+        .access(stream.path)
+        .then(() => {
+          resolve({ ...metadata, filepath: stream.path as string });
+        })
+        .catch(() => {
+          reject(
+            new LingoError(
+              LingoError.Code.FileNotValid,
+              `
 Unable to access asset file
   name: ${metadata.name}
   path: ${stream.path}
-       `);
-    }
-    return { ...metadata, filepath: stream.path as string };
+       `
+            )
+          );
+        });
+    });
   }
 
   /**
