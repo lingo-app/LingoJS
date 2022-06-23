@@ -5,7 +5,8 @@
     "target": "es6",
     "moduleResolution": "node",
     "declaration": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "types": ["node", "jest"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "test/**/*"]
 }

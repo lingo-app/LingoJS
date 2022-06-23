@@ -1,4 +1,3 @@
-import fsPromises from "fs/promises";
 import fs from "fs";
 import FormData from "form-data";
 import _merge from "lodash/merge";
@@ -9,7 +8,6 @@ import LingoError from "./lingoError";
 import { AssetType, ItemType, Kit, Section, Item, KitOutline } from "./types";
 import { getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
-import { resolve } from "path/posix";
 
 class Lingo {
   baseURL = "https://api.lingoapp.com/1";
@@ -351,7 +349,7 @@ Unable to access asset file
 
     const response = await fetch(url, options),
       _json = await response.json(),
-      res = parseJSONResponse(_json);
+      res = parseJSONResponse(_json as Record<string, unknown>);
     return res.item;
   }
 
@@ -403,7 +401,7 @@ Unable to access asset file
     const { url, ..._options } = this.requestParams(method, path, options);
     const response = await fetch(url, _options);
     const json = await response.json();
-    return parseJSONResponse(json);
+    return parseJSONResponse(json as Record<string, unknown>);
   }
 }
 
