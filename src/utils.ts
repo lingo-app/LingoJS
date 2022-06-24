@@ -28,8 +28,14 @@ export function getUploadData(
   const filePath = resolveFilePath(file),
     { filename, extension } = parseFilePath(file),
     name = data?.name || filename,
-    type = data?.type || extension,
-    fileData = fs.createReadStream(filePath);
+    type = data?.type || extension;
+
+  try {
+    fs.accessSync(filePath, fs.constants.R_OK);
+  } catch {
+    throw new LingoError(LingoError.Code.FileNotValid, `Unable to access asset file: ${file}`);
+  }
+  const fileData = fs.createReadStream(filePath);
 
   if (!type) {
     throw new LingoError(

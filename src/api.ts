@@ -1,4 +1,3 @@
-import { constants as fsConstants, promises as fsPromises } from "fs";
 import FormData from "form-data";
 import _merge from "lodash/merge";
 import QueryString from "query-string";
@@ -282,20 +281,11 @@ class Lingo {
     file: string,
     data: { name?: string; type?: AssetType; notes?: string }
   ): Promise<{ name?: string; type: string; filepath: string }> {
-    const { file: stream, metadata } = getUploadData(file, data);
-
     try {
-      await fsPromises.access(stream.path, fsConstants.R_OK);
-      return { ...metadata, filepath: stream.path as string };
+      const { file: stream, metadata } = getUploadData(file, data);
+      return Promise.resolve({ ...metadata, filepath: stream.path as string });
     } catch {
-      throw new LingoError(
-        LingoError.Code.FileNotValid,
-        `
-Unable to access asset file
-  name: ${metadata.name}
-  path: ${stream.path}
-`
-      );
+      throw new LingoError(LingoError.Code.FileNotValid, `Unable to access asset file: ${file}`);
     }
   }
 

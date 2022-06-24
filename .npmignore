@@ -2,3 +2,7 @@
 .vscode/
 src/
 test/
+tsconfig.json
+tsconfig.build.json
+.prettierrc
+.eslintrc.json

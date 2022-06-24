@@ -4560,7 +4560,7 @@ resolve@^1.20.0:
   languageName: node
   linkType: hard
 
-typescript@4.5.5:
+"typescript@npm:4.5.5":
   version: 4.5.5
   resolution: "typescript@npm:4.5.5"
   bin:

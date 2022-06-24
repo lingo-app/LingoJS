@@ -73,10 +73,14 @@ describe("File utils", () => {
   it("should fail to validate the invalid file", async () => {
     const filePath = __dirname + "/not-" + fileName;
     try {
+      // console.log("Checking file");
       await lingo.validateAsset(filePath, {});
+      // console.log("Checked");
       throw new Error("Expected to fail");
     } catch (e) {
+      // console.log("Catch", e);
       assert.match(e.message, /Unable to access asset file/);
+      // console.log("Done");
       // faile  d as expected
     }
   });
@@ -89,6 +93,7 @@ describe("JSON response parsing", () => {
     );
   });
   it("Should throw if invalid response", () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     assert.throws(() => parseJSONResponse({}));
   });
 
