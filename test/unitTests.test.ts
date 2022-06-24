@@ -93,6 +93,7 @@ describe("JSON response parsing", () => {
     );
   });
   it("Should throw if invalid response", () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     jest.spyOn(console, "error").mockImplementation(() => {});
     assert.throws(() => parseJSONResponse({}));
   });
