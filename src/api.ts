@@ -5,7 +5,7 @@ import fetch from "node-fetch";
 
 import LingoError from "./lingoError";
 import { AssetType, ItemType, Kit, Section, Item, KitOutline, Asset } from "./types";
-import { formatDate, getUploadData, parseJSONResponse } from "./utils";
+import { formatDate, getUploadData, parseJSONResponse, parseIdentifier as parseID } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
 
@@ -35,6 +35,10 @@ class Lingo {
   setup(spaceId: number | string, token: string): void {
     this.spaceId = spaceId;
     this.auth = "Basic " + Buffer.from(spaceId + ":" + token).toString("base64");
+  }
+
+  parseIdentifier(identifier: string): string {
+    return parseID(identifier);
   }
 
   /**
