@@ -45,92 +45,136 @@ describe("Read requests", () => {
     lingo.setup(config.spaceID, config.apiToken);
   });
 
-  it("Should fetch kits", async () => {
-    const res = await lingo.fetchKits();
-    assert(res.length, "expected kits");
-    assert(res[0].kitId, "expected the kit to have a uuid");
+  describe("Fetching kits", () => {
+    it("Should fetch kits", async () => {
+      const res = await lingo.fetchKits();
+      assert(res.length, "expected kits");
+      assert(res[0].kitId, "expected the kit to have a uuid");
+    });
+
+    it("Should fail to find non-existent kit", async () => {
+      try {
+        await lingo.fetchKit("invalid-kit-uuid");
+        assert(false, "Request unexpectedly succeeded");
+      } catch (err) {
+        assert(
+          err.code === LingoError.Code.KitNotFound,
+          `Expected error code 1100, got ${err.code}`
+        );
+      }
+    });
+
+    it("Should fetch kit with versions", async () => {
+      const kit = await lingo.fetchKit(config.kitID);
+      assert(kit.versions.length > 0, "expected versions");
+    });
+
+    it("Should fetch kit outline", async () => {
+      const outline = await lingo.fetchKitOutline(config.kitID, 0);
+      assert(outline.sections.length > 0, "expected versions");
+    });
   });
 
-  it("Should fail to find non-existent kit", async () => {
-    try {
-      await lingo.fetchKit("invalid-kit-uuid");
-      assert(false, "Request unexpectedly succeeded");
-    } catch (err) {
-      assert(err.code === LingoError.Code.KitNotFound, `Expected error code 1100, got ${err.code}`);
-    }
-  });
+  describe("Fetching kit content", () => {
+    it("Should fetch section and items", async () => {
+      const section = await lingo.fetchSection(config.sectionID, 0);
+      assert(section.id === config.sectionID, "expected sections");
+      assert(section.items.length > 0, "expected items");
+    });
 
-  it("Should fetch kit with versions", async () => {
-    const kit = await lingo.fetchKit(config.kitID);
-    assert(kit.versions.length > 0, "expected versions");
-  });
+    it("Should download asset file", async () => {
+      const result = await lingo.downloadAsset(config.assetID);
+      assert(result instanceof Buffer, `expected file buffer ${result}`);
+    });
 
-  it("Should fetch kit outline", async () => {
-    const outline = await lingo.fetchKitOutline(config.kitID, 0);
-    assert(outline.sections.length > 0, "expected versions");
-  });
-
-  it("Should fetch section and items", async () => {
-    const section = await lingo.fetchSection(config.sectionID, 0);
-    assert(section.id === config.sectionID, "expected sections");
-    assert(section.items.length > 0, "expected items");
-  });
-
-  it("Should fetch search results", async () => {
-    const results = await lingo.search().inKit(config.kitID).matchingKeyword("logo").fetch();
-
-    assert(results, "expected sections");
-    assert(results.results, "expected results");
-  });
-
-  it("Should fail to download invalid asset", async () => {
-    try {
-      await lingo.downloadAsset("invalid-asset-uuid");
-      assert(false, "Request unexpectedly succeeded");
-    } catch (err) {
+    it("Should fetch items in section with autopage", async () => {
+      const section = await lingo.fetchSection(config.sectionID, 0, 1, 0);
+      const items = await lingo.fetchAllItemsInSection(section.id, section.version);
       assert(
-        err.code === LingoError.Code.AssetNotFound,
-        `Expected error code 3100, got ${err.code}`
+        items.length === section.counts.items,
+        `Unexpected item count with auto paging ${items.length} / ${section.counts.items}`
       );
-    }
+    });
+
+    describe("Depercated ", () => {
+      beforeAll(() => {
+        jest.spyOn(console, "error").mockImplementation(() => {
+          // Hide
+        });
+      });
+      afterAll(() => {
+        (console.error as jest.Mock).mockRestore();
+      });
+      it("Should fetch items under heading by id: deprecated", async () => {
+        const result = await lingo.fetchAssetsForHeading(config.sectionID, config.headingID, 0);
+        assert.equal(result.length, 1, "Unexpected item count under heading");
+      });
+    });
+
+    it("Should fetch items under heading by id", async () => {
+      const result = await lingo.fetchItemsForHeading(config.sectionID, config.headingID, 0);
+      assert.equal(result.length, 1, "Unexpected item count under heading");
+    });
+
+    it("Should fetch assets under heading by name", async () => {
+      const result = await lingo.fetchItemsForHeading(config.sectionID, config.headingName, 0);
+      assert.equal(result.length, 1, "Unexpected item count under heading");
+    });
   });
 
-  it("Should get asset download url", async () => {
-    const result = await lingo.getAssetDownloadUrl(config.assetID);
-    assert(result.indexOf("s3.amazon.com"), `Unexpected download url ${result}`);
+  describe("Downloading assets", () => {
+    it("Should fail to download invalid asset", async () => {
+      try {
+        await lingo.downloadAsset("invalid-asset-uuid");
+        assert(false, "Request unexpectedly succeeded");
+      } catch (err) {
+        assert(
+          err.code === LingoError.Code.AssetNotFound,
+          `Expected error code 3100, got ${err.code}`
+        );
+      }
+    });
+
+    it("Should get asset download url", async () => {
+      const result = await lingo.getAssetDownloadUrl(config.assetID);
+      assert(result.indexOf("s3.amazon.com"), `Unexpected download url ${result}`);
+    });
   });
 
-  it("Should download asset file", async () => {
-    const result = await lingo.downloadAsset(config.assetID);
-    assert(result instanceof Buffer, `expected file buffer ${result}`);
-  });
+  describe("Search", () => {
+    it("Should fetch search results", async () => {
+      const results = await lingo.search().inKit(config.kitID).matchingKeyword("logo").fetch();
+      assert(results, "expected sections");
+      assert(results.results, "expected results");
+    });
 
-  it("Should fetch items in section with autopage", async () => {
-    const section = await lingo.fetchSection(config.sectionID, 0, 1, 0);
-    const items = await lingo.fetchAllItemsInSection(section.id, section.version);
-    assert(
-      items.length === section.counts.items,
-      `Unexpected item count with auto paging ${items.length} / ${section.counts.items}`
-    );
-  });
+    it("Should fetch kit results", async () => {
+      const results = await lingo.search().kits().matchingKeyword("logo").fetch();
+      assert(results, "expected sections");
+      assert(results.results, "expected results");
+    });
 
-  it("Should fetch items under heading by id: deprecated", async () => {
-    const result = await lingo.fetchAssetsForHeading(config.sectionID, config.headingID, 0);
-    assert.equal(result.length, 1, "Unexpected item count under heading");
-  });
+    it("Should fetch section results", async () => {
+      const results = await lingo.search().sections().matchingKeyword("logo").fetch();
+      assert(results, "expected sections");
+      assert(results.results, "expected results");
+    });
 
-  it("Should fetch items under heading by id", async () => {
-    const result = await lingo.fetchItemsForHeading(config.sectionID, config.headingID, 0);
-    assert.equal(result.length, 1, "Unexpected item count under heading");
-  });
+    it("Should fetch library asset results", async () => {
+      const results = await lingo.search().assets().matchingKeyword("logo").fetch();
+      assert(results, "expected sections");
+      assert(results.results, "expected results");
+    });
 
-  it("Should fetch assets under heading by name", async () => {
-    const result = await lingo.fetchItemsForHeading(config.sectionID, config.headingName, 0);
-    assert.equal(result.length, 1, "Unexpected item count under heading");
+    it("Should fetch library tag results", async () => {
+      const results = await lingo.search().tags().matchingKeyword("logo").fetch();
+      assert(results, "expected sections");
+      assert(results.results, "expected results");
+    });
   });
 });
 
-describe("Write requests", () => {
+describe.skip("Write requests", () => {
   beforeAll(() => {
     lingo.setup(config.spaceID, config.apiToken);
   });

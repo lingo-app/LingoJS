@@ -2,7 +2,8 @@ import lingo from ".";
 import { SearchResult } from "./types";
 import { encodeUnicode } from "./utils";
 
-type QueryType = "content" | "jump_to";
+type QueryContext = "global" | "library";
+type QueryType = "content" | "jump_to" | "assets" | "tags";
 type Sort = "relevance" | "type" | "alpha" | "recent";
 
 /**
@@ -29,6 +30,7 @@ type Sort = "relevance" | "type" | "alpha" | "recent";
  */
 export class Search {
   _filters = [];
+  _context: QueryContext = "global";
   _queryType: QueryType = "content";
   _sort: string;
   _offset = 0;
@@ -41,6 +43,7 @@ export class Search {
   async fetch(): Promise<SearchResult> {
     const path = "/search",
       params = encodeUnicode({
+        context: this._context,
         type: this._queryType,
         filters: this._filters,
         sort: this._sort,
@@ -50,13 +53,37 @@ export class Search {
     return await lingo.callAPI("GET", path, { qs: { query: params } });
   }
 
+  // Context
+  /*-------------------------------------------------------------------------------*/
+
   // Query Type
   /*-------------------------------------------------------------------------------*/
   /**
+   * Search all assets in the library
+   * @returns The chainable search object
+   */
+  assets(): Search {
+    this._context = "library";
+    this._queryType = "assets";
+    return this;
+  }
+
+  /**
+   * Search all tags in the library
+   * @returns The chainable search object
+   */
+  tags(): Search {
+    this._context = "library";
+    this._queryType = "tags";
+    return this;
+  }
+  /**
    * Restrict results to content such as notes, guides, and assets. (default)
+   * Only applies to global searches.
    * @returns The chainable search object
    */
   content(): Search {
+    this._context = "global";
     this._queryType = "content";
     return this;
   }
@@ -65,23 +92,28 @@ export class Search {
    * @returns The chainable search object
    */
   kits(): Search {
+    this._context = "global";
     this._queryType = "jump_to";
     return this.ofType("kit");
   }
   /**
    * Restrict results to sections
+   * Only applies to global searches.
    * @returns The chainable search object
    */
   sections(): Search {
+    this._context = "global";
     this._queryType = "jump_to";
     return this.ofType("section");
   }
 
   /**
    * Restrict results to headings
+   * Only applies to global searches.
    * @returns The chainable search object
    */
   headings(): Search {
+    this._context = "global";
     this._queryType = "jump_to";
     return this.ofType("heading");
   }
