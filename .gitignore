@@ -1,5 +1,6 @@
 test_config.js
 testConfig.js
+testConfig.ts
 node_modules
 .npm
 npm-debug.log
