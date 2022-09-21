@@ -79,7 +79,6 @@ export class Search {
   }
   /**
    * Restrict results to content such as notes, guides, and assets. (default)
-   * Only applies to global searches.
    * @returns The chainable search object
    */
   content(): Search {
@@ -98,7 +97,6 @@ export class Search {
   }
   /**
    * Restrict results to sections
-   * Only applies to global searches.
    * @returns The chainable search object
    */
   sections(): Search {
@@ -109,7 +107,6 @@ export class Search {
 
   /**
    * Restrict results to headings
-   * Only applies to global searches.
    * @returns The chainable search object
    */
   headings(): Search {
