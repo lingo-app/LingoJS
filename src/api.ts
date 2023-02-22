@@ -366,8 +366,10 @@ class Lingo {
         }
       );
     }
-    const { item } = await this._createFileAsset(file, {
-      item: {
+    const { item } = await this._createFileAsset(
+      file,
+      {},
+      {
         kitId,
         sectionId,
         displayOrder,
@@ -378,8 +380,8 @@ class Lingo {
           title,
           display_style: "image",
         },
-      },
-    });
+      }
+    );
     return item;
   }
 
@@ -399,7 +401,7 @@ class Lingo {
     const { kitId, sectionId, file, displayOrder } = position;
     const itemData = { kitId, sectionId, displayOrder, type: ItemType.SupportingContent };
 
-    const { item } = await this._createFileAsset(file, { item: itemData });
+    const { item } = await this._createFileAsset(file, {}, itemData);
     return item;
   }
 
@@ -414,8 +416,9 @@ class Lingo {
     data?: {
       name?: string;
       notes?: string;
-      item?: AssetItem;
-    }
+      keywords?: string;
+    },
+    item?: AssetItem
   ): Promise<{ asset?: Asset; item?: Item }> {
     const c = new TinyColor(color);
     const hsv = c.toHsv();
@@ -423,18 +426,18 @@ class Lingo {
       throw Error(`Invalid color: ${color}`);
     }
 
-    const item = data?.item
+    const _item = item
       ? {
-          section_uuid: data.item.sectionId,
-          kit_uuid: data.item.kitId,
-          display_order: data.item.displayOrder,
+          section_uuid: item.sectionId,
+          kit_uuid: item.kitId,
+          display_order: item.displayOrder,
           type: "asset",
         }
       : undefined;
 
     const assetData = {
       ...data,
-      item,
+      item: _item,
       type: AssetType.Color,
       colors: [
         {
@@ -497,10 +500,11 @@ class Lingo {
       name?: string;
       type?: AssetType;
       notes?: string;
-      item: AssetItem;
-    }
+      keywords?: string;
+    },
+    item?: AssetItem
   ): Promise<{ item?: Item; asset?: Asset }> {
-    return await this._createFileAsset(file, data);
+    return await this._createFileAsset(file, data, item);
   }
 
   private async _createFileAsset(
@@ -509,24 +513,28 @@ class Lingo {
       name?: string;
       type?: AssetType;
       notes?: string;
-      item: AssetItem & { type?: ItemType; data?: ItemData };
-    }
+      keywords?: string;
+    },
+    item?: AssetItem & { type?: ItemType; data?: ItemData }
   ) {
     const { file: fileData, metadata } = getUploadData(file, data),
       json = _merge({}, metadata, data);
 
     const fonts = ["TTF", "OTF", "WOFF", "WOFF2"];
-    if (fonts.includes(metadata.type)) {
+    if (fonts.includes(metadata.type.toUpperCase())) {
       json.type = AssetType.TextStyle;
+      json.meta = {
+        font: { extension: metadata.type },
+      };
     }
 
-    if (data?.item) {
+    if (item) {
       json.item = {
-        type: data.item.type ?? "asset",
-        kit_uuid: data.item.kitId,
-        section_uuid: data.item.sectionId,
-        display_order: data.item.displayOrder,
-        data: data.item.data,
+        type: item.type ?? "asset",
+        kit_uuid: item.kitId,
+        section_uuid: item.sectionId,
+        display_order: item.displayOrder,
+        data: item.data,
       };
     }
 

@@ -275,11 +275,14 @@ describe("Write requests", () => {
         });
 
         it("Should create a color asset with an item", async () => {
-          const { asset, item } = await lingo.createColorAsset("#AAFFFF", {
-            name: "White",
-            notes: "A white color",
-            item: { kitId: kit.kitId, sectionId: section.id },
-          });
+          const { asset, item } = await lingo.createColorAsset(
+            "#AAFFFF",
+            {
+              name: "White",
+              notes: "A white color",
+            },
+            { kitId: kit.kitId, sectionId: section.id }
+          );
           expect(asset).toBeUndefined();
           expect(item.asset.type).toEqual(AssetType.Color);
           expect(item.asset.colors.length).toEqual(1);
@@ -292,9 +295,11 @@ describe("Write requests", () => {
           "Should create file asset with an item",
           async () => {
             const filePath = __dirname + "/Logo.svg";
-            const response = await lingo.createFileAsset(filePath, {
-              item: { kitId: kit.kitId, sectionId: section.id },
-            });
+            const response = await lingo.createFileAsset(
+              filePath,
+              {},
+              { kitId: kit.kitId, sectionId: section.id }
+            );
             expect(response.asset).toBeUndefined();
             const item = response.item;
             const asset = item.asset;
@@ -327,8 +332,9 @@ describe("Write requests", () => {
             const response = await lingo.createFileAsset(filePath);
             expect(response.item).toBeUndefined();
             const asset = response.asset;
-            expect(asset.type).toEqual(AssetType.SVG);
-            expect(asset.name).toEqual("Logo");
+            expect(asset.type).toEqual(AssetType.TextStyle);
+            expect(asset.meta.font.family).toEqual("Inter Light");
+            expect(asset.name).toEqual("Inter-Light");
           },
           20 * 1000
         );
