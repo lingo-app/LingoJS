@@ -515,6 +515,11 @@ class Lingo {
     const { file: fileData, metadata } = getUploadData(file, data),
       json = _merge({}, metadata, data);
 
+    const fonts = ["TTF", "OTF", "WOFF", "WOFF2"];
+    if (fonts.includes(metadata.type)) {
+      json.type = AssetType.TextStyle;
+    }
+
     if (data?.item) {
       json.item = {
         type: data.item.type ?? "asset",

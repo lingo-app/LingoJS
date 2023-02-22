@@ -300,9 +300,9 @@ describe("Write requests", () => {
             const asset = item.asset;
             expect(item.kitId).toEqual(kit.kitId);
             expect(item.sectionId).toEqual(section.id);
-            assert.equal(item.type, ItemType.Asset);
-            assert.equal(asset.type, AssetType.SVG);
-            assert.equal(asset.name, "Logo");
+            expect(item.type).toEqual(ItemType.Asset);
+            expect(asset.type).toEqual(AssetType.SVG);
+            expect(asset.name).toEqual("Logo");
           },
           20 * 1000
         );
@@ -314,8 +314,8 @@ describe("Write requests", () => {
             const response = await lingo.createFileAsset(filePath);
             expect(response.item).toBeUndefined();
             const asset = response.asset;
-            assert.equal(asset.type, AssetType.SVG);
-            assert.equal(asset.name, "Logo");
+            expect(asset.type).toEqual(AssetType.SVG);
+            expect(asset.name).toEqual("Logo");
           },
           20 * 1000
         );
@@ -327,8 +327,8 @@ describe("Write requests", () => {
             const response = await lingo.createFileAsset(filePath);
             expect(response.item).toBeUndefined();
             const asset = response.asset;
-            assert.equal(asset.type, AssetType.SVG);
-            assert.equal(asset.name, "Logo");
+            expect(asset.type).toEqual(AssetType.SVG);
+            expect(asset.name).toEqual("Logo");
           },
           20 * 1000
         );
