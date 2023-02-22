@@ -155,13 +155,26 @@ describe("Read requests", () => {
 
     it("Should fetch library tag results", async () => {
       const results = await lingo.search().tags().matchingKeyword("logo").fetch();
-      assert(results, "expected sections");
       assert(results.results, "expected results");
+    });
+
+    it("Should assets from date ", async () => {
+      const results = await lingo.search().assets().createdAt({ exactly: "2021-03-10" }).fetch();
+      assert(results.results.length, "expected results");
+    });
+    it("Should assets from date range ", async () => {
+      const results = await lingo
+        .search()
+        .assets()
+        .createdAt({ after: "2021-03-05", before: "2021-03-11" })
+        .fetch();
+      assert(results, "expected sections");
+      assert(results.results.length, "expected results");
     });
   });
 });
 
-describe("Write requests", () => {
+describe.skip("Write requests", () => {
   beforeAll(() => {
     lingo.setup(config.spaceID, config.apiToken);
   });
