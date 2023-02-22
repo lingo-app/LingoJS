@@ -7,7 +7,6 @@
  * 2. Populate the new config file with data for your test space
  * 3. Run `npm run integration-test`
  */
-
 import { strict as assert } from "assert";
 import lingo, { AssetType, ItemType, Kit, LingoError, Section } from "../src/index";
 import config from "./testConfig";
@@ -312,6 +311,19 @@ describe("Write requests", () => {
           "Should create file asset without an item",
           async () => {
             const filePath = __dirname + "/Logo.svg";
+            const response = await lingo.createFileAsset(filePath);
+            expect(response.item).toBeUndefined();
+            const asset = response.asset;
+            assert.equal(asset.type, AssetType.SVG);
+            assert.equal(asset.name, "Logo");
+          },
+          20 * 1000
+        );
+
+        it(
+          "Should create a font asset",
+          async () => {
+            const filePath = __dirname + "/Inter-Light.otf";
             const response = await lingo.createFileAsset(filePath);
             expect(response.item).toBeUndefined();
             const asset = response.asset;

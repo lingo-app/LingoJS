@@ -2,6 +2,7 @@
  * The integration tests makes actual API calls
  * This is intended for use in development environments only
  */
+
 import { ReadStream } from "fs";
 import { strict as assert } from "assert";
 import lingo, { AssetType, ItemType, LingoError } from "../src/index";
@@ -9,40 +10,40 @@ import { getUploadData, parseFilePath, resolveFilePath, parseJSONResponse } from
 
 describe("Library exports", () => {
   it("Makes the Error object availble", () => {
-    assert.equal(LingoError.Code.Unknown, 1);
+    expect(LingoError.Code.Unknown).toEqual(1);
   });
 
   it("Makes the type objects availble", () => {
-    assert.equal(ItemType.Heading, "heading");
-    assert.equal(AssetType.JPG, "JPG");
+    expect(ItemType.Heading).toEqual("heading");
+    expect(AssetType.JPG).toEqual("JPG");
   });
 });
 
 describe("File utils", () => {
-  const fileName = "Beer.svg";
+  const fileName = "Logo.svg";
 
   it("should parse the file url", () => {
     const { filename, extension } = parseFilePath("/path/to/" + fileName);
-    assert.equal(filename, "Beer");
-    assert.equal(extension, "svg");
+    expect(filename).toEqual("Logo");
+    expect(extension).toEqual("svg");
   });
 
   it("should return path if already resolved", () => {
     const expected = process.cwd() + "/" + fileName;
     const filePath = resolveFilePath(expected);
-    assert.equal(filePath, expected);
+    expect(filePath).toEqual(expected);
   });
 
   it("should resolve relative path to cwd", () => {
     const filePath = resolveFilePath("./" + fileName);
     const expected = process.cwd() + "/" + fileName;
-    assert.equal(filePath, expected);
+    expect(filePath).toEqual(expected);
   });
 
   it("should resolve relative path with directory", () => {
     const filePath = resolveFilePath("./files/" + fileName);
     const expected = process.cwd() + "/files/" + fileName;
-    assert.equal(filePath, expected);
+    expect(filePath).toEqual(expected);
   });
 
   it("should resolve relative path with parent directory", () => {
@@ -50,24 +51,24 @@ describe("File utils", () => {
     const dir = process.cwd().split("/");
     dir.pop();
     const expected = dir.join("/") + "/" + fileName;
-    assert.equal(filePath, expected);
+    expect(filePath).toEqual(expected);
   });
 
   it("should load file and determine upload data", () => {
     const filePath = __dirname + "/" + fileName;
     const { file, metadata } = getUploadData(filePath);
     assert(file instanceof ReadStream, `Expected file to be a buffer ${file}`);
-    assert.deepEqual(metadata, {
-      name: "Beer",
+    expect(metadata).toEqual({
+      name: "Logo",
       type: "svg",
     });
   });
 
   it("should validate the file", async () => {
-    const filePath = __dirname + "/" + fileName;
+    const filePath = __dirname + "/" + "Logo.svg";
     const { name, type } = await lingo.validateAsset(filePath, {});
-    assert.equal(name, "Beer");
-    assert.equal(type, "svg");
+    expect(name).toEqual("Logo");
+    expect(type).toEqual("svg");
   });
 
   it("should fail to validate the invalid file", async () => {
@@ -228,9 +229,9 @@ describe("Search", () => {
 
   it("Should add after filter relative number of days", () => {
     const search = lingo.search().after(30);
-    assert.equal(search._filters[0].type, "after");
-    assert.equal(search._filters[0].period, "day");
-    assert.equal(search._filters[0].length, 30);
+    expect(search._filters[0].type).toEqual("after");
+    expect(search._filters[0].period).toEqual("day");
+    expect(search._filters[0].length).toEqual(30);
   });
 
   it("Should add before filter with Date", () => {
