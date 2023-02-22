@@ -4,20 +4,37 @@ import QueryString from "query-string";
 import fetch from "node-fetch";
 
 import LingoError from "./lingoError";
-import { AssetType, ItemType, Kit, Section, Item, KitOutline } from "./types";
+import { AssetType, ItemType, Kit, Section, Item, KitOutline, Asset } from "./types";
 import { getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
+import { TinyColor } from "@ctrl/tinycolor";
+
+type KitIncludes = "use_versions" | "versions" | null;
+type AssetItem = {
+  kitId: string;
+  sectionId: string;
+  displayOrder?: string | number;
+};
+type ItemData = {
+  content?: string;
+  title?: string;
+  code_language?: string;
+  display_style?: string;
+  color?: string;
+};
 
 class Lingo {
   baseURL = "https://api.lingoapp.com/1";
+  private spaceId: number | string;
   private auth: string;
   /**
    * Set your API auth credientials before using making any calls
    * @param spaceID The id of your Lingo space
    * @param token An API token for your space
    */
-  setup(spaceID: number | string, token: string): void {
-    this.auth = "Basic " + Buffer.from(spaceID + ":" + token).toString("base64");
+  setup(spaceId: number | string, token: string): void {
+    this.spaceId = spaceId;
+    this.auth = "Basic " + Buffer.from(spaceId + ":" + token).toString("base64");
   }
 
   /**
@@ -38,7 +55,7 @@ class Lingo {
    * - `null`: don't include any versions
    * @returns Success returns a kit
    */
-  async fetchKit(id: string, include = "use_versions"): Promise<Kit> {
+  async fetchKit(id: string, include: KitIncludes = "use_versions"): Promise<Kit> {
     const path = `/kits/${id}/?options=${include}`;
     const res = await this.callAPI("GET", path);
     return res.kit;
@@ -99,11 +116,6 @@ class Lingo {
     }
   }
 
-  async fetchAssetsForHeading(sectionId: string, headingId: string, version = 0): Promise<Item[]> {
-    console.error("fetchAssetsForHeading() is deprecated, please use fetchItemsForHeading()");
-    return await this.fetchItemsForHeading(sectionId, headingId, version);
-  }
-
   /**
    * Fetch all items that fall under a given heading in a section
    * @param sectionId the section id the heading is in
@@ -120,7 +132,8 @@ class Lingo {
 
     function isMatch(item: Item) {
       return (
-        item.type === ItemType.Heading && (item.data.content === headingId || item.id === headingId)
+        item.type === ItemType.Heading &&
+        (item.data.content === headingId || item.id === headingId || item.shortId === headingId)
       );
     }
     // eslint-disable-next-line no-constant-condition
@@ -161,10 +174,13 @@ class Lingo {
    * @param type The type of filecut to donwload, defaults to original
    * @returns A url to download the prepared file
    */
-  async getAssetDownloadUrl(id: string, type?: string): Promise<string> {
+  async getAssetDownloadUrl(
+    id: string,
+    options?: { type?: string; dimensions?: string; dpi?: number }
+  ): Promise<string> {
     const path = `/assets/${id}/download`;
     const res = await this.callAPI("GET", path, {
-      qs: { type, response: "json" },
+      qs: { ...options, response: "json" },
     });
     return res.url;
   }
@@ -175,8 +191,11 @@ class Lingo {
    * @param type The type of filecut to donwload, defaults to original
    * @returns A buffer with the file data
    */
-  async downloadAsset(id: string, type?: string): Promise<Buffer> {
-    const downloadUrl = await this.getAssetDownloadUrl(id, type);
+  async downloadAsset(
+    id: string,
+    options?: { type?: string; dimensions?: string; dpi?: number }
+  ): Promise<Buffer> {
+    const downloadUrl = await this.getAssetDownloadUrl(id, options);
     const res = await fetch(downloadUrl);
     if (res.status != 200) {
       // Most likely an s3 error
@@ -223,26 +242,22 @@ class Lingo {
     return res.section;
   }
 
-  private async _createTextItem(
+  private async _createItemWithoutAsset(
     type: string,
-    kitId: string,
-    sectionId: string,
-    text?: string
+    context: {
+      kitId: string;
+      sectionId: string;
+      displayOrder?: string | number;
+    },
+    data: ItemData
   ): Promise<Item> {
-    if (!text) {
-      throw new LingoError(
-        LingoError.Code.InvalidParams,
-        "Text is required when creating a heading"
-      );
-    }
     const res = await this.callAPI("POST", "/items", {
       data: {
-        section_uuid: sectionId,
-        kit_uuid: kitId,
+        section_uuid: context.sectionId,
+        kit_uuid: context.kitId,
+        display_order: context.displayOrder,
         type,
-        data: {
-          content: text,
-        },
+        data,
       },
     });
     return res.item;
@@ -255,8 +270,18 @@ class Lingo {
    * @param text The text content of the heading
    * @returns The new item
    */
-  async createHeading(kitId: string, sectionId: string, text: string): Promise<Item> {
-    return this._createTextItem(ItemType.Heading, kitId, sectionId, text);
+  async createHeading(data: {
+    content: string;
+    kitId: string;
+    sectionId: string;
+    displayOrder?: string | number;
+  }): Promise<Item> {
+    const { kitId, sectionId, displayOrder } = data;
+    return this._createItemWithoutAsset(
+      ItemType.Heading,
+      { kitId, sectionId, displayOrder },
+      { content: data.content }
+    );
   }
 
   /**
@@ -266,8 +291,166 @@ class Lingo {
    * @param text The text content of the note
    * @returns The new item
    */
-  async createNote(kitId: string, sectionId: string, text: string): Promise<Item> {
-    return this._createTextItem(ItemType.Note, kitId, sectionId, text);
+  async createNote(data: {
+    content: string;
+    kitId: string;
+    sectionId: string;
+    displayOrder?: string | number;
+  }): Promise<Item> {
+    const { kitId, sectionId, displayOrder } = data;
+    return this._createItemWithoutAsset(
+      ItemType.Note,
+      { kitId, sectionId, displayOrder },
+      { content: data.content }
+    );
+  }
+
+  /**
+   * Create a new inline note
+   * @param kitId The id of the kit to create the item in
+   * @param sectionId The id of the section to create the item in (must be in kit)
+   * @param text The text content of the note
+   * @returns The new item
+   */
+  async createCodeSnippet(data: {
+    kitId: string;
+    sectionId: string;
+    displayOrder?: string | number;
+    content: string;
+    language?: string;
+  }): Promise<Item> {
+    const { kitId, sectionId, content, language, displayOrder } = data;
+    return this._createItemWithoutAsset(
+      ItemType.CodeSnippet,
+      { kitId, sectionId, displayOrder },
+      {
+        content,
+        code_language: language,
+      }
+    );
+  }
+
+  /**
+   * Create a new inline note
+   * @param kitId The id of the kit to create the item in
+   * @param sectionId The id of the section to create the item in (must be in kit)
+   * @param text The text content of the note
+   * @returns The new item
+   */
+  async createGuide(data: {
+    kitId: string;
+    sectionId: string;
+    displayOrder?: string | number;
+    content: string;
+    title: "Do" | "Don't";
+    file?: string;
+  }): Promise<Item> {
+    const { kitId, sectionId, content, title, file, displayOrder } = data;
+    const color = { Do: "green", "Don't": "red" }[title];
+    if (!color) {
+      throw new LingoError(
+        LingoError.Code.InvalidParams,
+        "Invalid guide title. Must be Do or Don't"
+      );
+    }
+
+    if (!file) {
+      return await this._createItemWithoutAsset(
+        ItemType.Guide,
+        { kitId, sectionId, displayOrder },
+        {
+          content,
+          title,
+          color,
+          display_style: "text_only",
+        }
+      );
+    }
+    const { item } = await this._createFileAsset(file, {
+      item: {
+        kitId,
+        sectionId,
+        displayOrder,
+        type: ItemType.Guide,
+        data: {
+          content,
+          color,
+          title,
+          display_style: "image",
+        },
+      },
+    });
+    return item;
+  }
+
+  /**
+   * Create a new inline note
+   * @param kitId The id of the kit to create the item in
+   * @param sectionId The id of the section to create the item in (must be in kit)
+   * @param file a filepath
+   * @returns The new item
+   */
+  async createSupportingContent(position: {
+    file: string;
+    kitId: string;
+    sectionId: string;
+    displayOrder?: string | number;
+  }): Promise<Item> {
+    const { kitId, sectionId, file, displayOrder } = position;
+    const itemData = { kitId, sectionId, displayOrder, type: ItemType.SupportingContent };
+
+    const { item } = await this._createFileAsset(file, { item: itemData });
+    return item;
+  }
+
+  /**
+   *
+   * @param color A color string, See TinyColor for supported formats
+   * @param context
+   * @param data
+   */
+  async createColorAsset(
+    color: string,
+    data?: {
+      name?: string;
+      notes?: string;
+      item?: AssetItem;
+    }
+  ): Promise<{ asset?: Asset; item?: Item }> {
+    const c = new TinyColor(color);
+    const hsv = c.toHsv();
+    if (!c.isValid) {
+      throw Error(`Invalid color: ${color}`);
+    }
+
+    const item = data?.item
+      ? {
+          section_uuid: data.item.sectionId,
+          kit_uuid: data.item.kitId,
+          display_order: data.item.displayOrder,
+          type: "asset",
+        }
+      : undefined;
+
+    const assetData = {
+      ...data,
+      item,
+      type: AssetType.Color,
+      colors: [
+        {
+          hue: hsv.h,
+          saturation: hsv.s * 100,
+          brightness: hsv.v * 100,
+          alpha: hsv.a * 100,
+          coverage: 100,
+        },
+      ],
+    };
+
+    const res = await this.callAPI("POST", "/assets", {
+      data: assetData,
+    });
+    return res;
   }
 
   /**
@@ -279,8 +462,8 @@ class Lingo {
    */
   async validateAsset(
     file: string,
-    data: { name?: string; type?: AssetType; notes?: string }
-  ): Promise<{ name?: string; type: string; filepath: string }> {
+    data: { type?: AssetType }
+  ): Promise<{ type: string; filepath: string; name: string }> {
     try {
       const { file: stream, metadata } = getUploadData(file, data);
       return Promise.resolve({ ...metadata, filepath: stream.path as string });
@@ -292,37 +475,56 @@ class Lingo {
   /**
    * Create a new asset from a file
    * @param file A filepath
-   * @param kitId The id of the kit to create the asset in
-   * @param sectionId The id of the section to create the asset in
    * @param data An oject with additional optional metadata
    * ```
    * data = {
    *  name: "",
    *  notes: "",
    *  keywords: "",
-   *  date_created: "",
    *  item: {
+   *    kitId: "",
+   *    sectionId: "",
    *    display_order: "append|prepend|before:uuid|after:uuid
    *  }
    * }
    * ```
    *
-   * @returns The new item and asset
+   * @returns The new item and/or asset. If context is provided the item will be returned, otherwise the asset will be returned
    */
-  async createAsset(
+  async createFileAsset(
     file: string,
-    kitId: string,
-    sectionId: string,
-    data?: { name?: string; type?: AssetType; notes?: string }
-  ): Promise<Item> {
+    data?: {
+      name?: string;
+      type?: AssetType;
+      notes?: string;
+      item: AssetItem;
+    }
+  ): Promise<{ item?: Item; asset?: Asset }> {
+    return await this._createFileAsset(file, data);
+  }
+
+  private async _createFileAsset(
+    file: string,
+    data?: {
+      name?: string;
+      type?: AssetType;
+      notes?: string;
+      item: AssetItem & { type?: ItemType; data?: ItemData };
+    }
+  ) {
     const { file: fileData, metadata } = getUploadData(file, data),
-      json = _merge({}, metadata, data, {
-        item: {
-          type: "asset",
-          kit_uuid: kitId,
-          section_uuid: sectionId,
-        },
-      });
+      json = _merge({}, metadata, data);
+
+    if (data?.item) {
+      json.item = {
+        type: data.item.type ?? "asset",
+        kit_uuid: data.item.kitId,
+        section_uuid: data.item.sectionId,
+        display_order: data.item.displayOrder,
+        data: data.item.data,
+      };
+    }
+
     const formData = new FormData();
     formData.append("asset", fileData);
     formData.append("json", JSON.stringify(json));
@@ -335,7 +537,7 @@ class Lingo {
     const response = await fetch(url, options),
       _json = await response.json(),
       res = parseJSONResponse(_json as Record<string, unknown>);
-    return res.item;
+    return res;
   }
 
   // MARK : Making Requests

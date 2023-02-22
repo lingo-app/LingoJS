@@ -1,7 +1,7 @@
 {
   "name": "@lingo-app/node",
   "description": "Lingo API wrapper",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "homepage": "https://github.com/lingo-app/lingojs",
   "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
   "repository": "https://github.com/lingo-app/lingojs",
@@ -18,6 +18,7 @@
     "setup": "yarn dlx @yarnpkg/sdks vscode"
   },
   "dependencies": {
+    "@ctrl/tinycolor": "^3.6.0",
     "btoa": "^1.2.1",
     "form-data": "^4.0.0",
     "lodash": "^4.17.21",

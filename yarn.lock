@@ -398,6 +398,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ctrl/tinycolor@npm:^3.6.0":
+  version: 3.6.0
+  resolution: "@ctrl/tinycolor@npm:3.6.0"
+  checksum: 4d1e481b4d7f9bb23d21b5436726034d37c2a1bc751b5169ef29ead0237e96443dbccbcfa887e20c3a65ba1b5e270063bb21b4034eac97561b980cbbd5e92a16
+  languageName: node
+  linkType: hard
+
 "@eslint/eslintrc@npm:^1.3.0":
   version: 1.3.0
   resolution: "@eslint/eslintrc@npm:1.3.0"
@@ -750,6 +757,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@lingo-app/node@workspace:."
   dependencies:
+    "@ctrl/tinycolor": ^3.6.0
     "@types/btoa": ^1.2.3
     "@types/jest": ^28.1.3
     "@types/node": ^18.0.0

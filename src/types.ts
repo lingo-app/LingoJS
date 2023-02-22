@@ -40,7 +40,7 @@ export enum ItemType {
   Asset = "asset",
   Heading = "heading",
   Note = "inline_note",
-  SupportingImage = "supporting_image",
+  SupportingContent = "supporting_image",
   CodeSnippet = "code_snippet",
   Guide = "guide",
 }
@@ -131,6 +131,10 @@ export interface Item {
   data: {
     content?: string;
     background?: string;
+    codeLanguage?: string;
+    displayStyle?: string;
+    title?: string;
+    color?: string;
   };
 }
 
@@ -167,7 +171,7 @@ export interface SearchResult {
   offset: number;
   limit: number;
   results: {
-    type: "item" | "section" | "kit";
-    object: Item | Kit | Section;
+    type: "item" | "section" | "kit" | "asset";
+    object: Item | Kit | Section | Asset;
   }[];
 }
