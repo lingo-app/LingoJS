@@ -242,8 +242,10 @@ export class Search {
   }
 
   /**
-   * Find results created after a given date.
-   * @param value A Date object, a date string (yyyy-mm-dd), or a number of days previous to now
+   * Find results created on a specific date or within a date range. Provide either `execlty` or `before` and `after` to specify a range.
+   * @param exactly File assets created on a specific date
+   * @param before File assets created before a date
+   * @param after File assets created after a date
    * @returns The chainable search object
    */
   createdAt(dates: {

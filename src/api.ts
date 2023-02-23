@@ -265,9 +265,10 @@ class Lingo {
 
   /**
    * Create a new heading
+   * @param content The text content of the heading
    * @param kitId The id of the kit to create the item in
    * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param text The text content of the heading
+   * @param displayOrder The relative order of the item in the section
    * @returns The new item
    */
   async createHeading(data: {
@@ -286,9 +287,10 @@ class Lingo {
 
   /**
    * Create a new inline note
+   * @param content The text content of the note
    * @param kitId The id of the kit to create the item in
    * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param text The text content of the note
+   * @param displayOrder The relative order of the item in the section
    * @returns The new item
    */
   async createNote(data: {
@@ -306,10 +308,12 @@ class Lingo {
   }
 
   /**
-   * Create a new inline note
+   * Create a new code snippet
+   * @param content The text content of the snippet
+   * @param language The text content of the snippet
    * @param kitId The id of the kit to create the item in
    * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param text The text content of the note
+   * @param displayOrder The relative order of the item in the section
    * @returns The new item
    */
   async createCodeSnippet(data: {
@@ -331,10 +335,13 @@ class Lingo {
   }
 
   /**
-   * Create a new inline note
+   * Create a new guide
+   * @param content The text content of the note
+   * @param title Do or Don't for the title of the guide
+   * @param file Optionally create the guide with an image.
    * @param kitId The id of the kit to create the item in
    * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param text The text content of the note
+   * @param displayOrder The relative order of the item in the section
    * @returns The new item
    */
   async createGuide(data: {
@@ -386,10 +393,11 @@ class Lingo {
   }
 
   /**
-   * Create a new inline note
+   * Create a new supprting content item
+   * @param file a filepath for a PNG, JPG, or supported video file.
    * @param kitId The id of the kit to create the item in
    * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param file a filepath
+   * @param displayOrder The relative order of the item in the section
    * @returns The new item
    */
   async createSupportingContent(position: {
@@ -406,10 +414,10 @@ class Lingo {
   }
 
   /**
-   *
+   * Create a color asset
    * @param color A color string, See TinyColor for supported formats
-   * @param context
-   * @param data
+   * @param data: Additional asset metadata
+   * @param item: An optional item to add the asset to a kit
    */
   async createColorAsset(
     color: string,
@@ -479,20 +487,21 @@ class Lingo {
    * Create a new asset from a file
    * @param file A filepath
    * @param data An oject with additional optional metadata
+   * @param item Optional item data to add the asset to a kit
    * ```
    * data = {
    *  name: "",
    *  notes: "",
    *  keywords: "",
-   *  item: {
+   * }
+   * item: {
    *    kitId: "",
    *    sectionId: "",
    *    display_order: "append|prepend|before:uuid|after:uuid
    *  }
-   * }
    * ```
    *
-   * @returns The new item and/or asset. If context is provided the item will be returned, otherwise the asset will be returned
+   * @returns The new item and/or asset. If an item is provided the item will be returned, otherwise the asset will be returned
    */
   async createFileAsset(
     file: string,
