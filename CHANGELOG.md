@@ -12,6 +12,7 @@
 * Added `createGuide`
 * Added `createCodeSnippet`
 * Added `createColorAsset`
+* `createFileAsset` now supports creating font files
 
 # 1.0.2
 * Add `validateAsset`
