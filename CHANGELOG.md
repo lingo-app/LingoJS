@@ -1,3 +1,19 @@
+# 2.0.0
+## Breaking
+* `createAsset` has been renamed `createFileAsset` and item data is now optionally provided in the `data` argument meaning that assets can now be created in the library without being added to a kit
+* Add `validateAsset` has been renamed `validateFileAsset`
+* Removed deprecated `fetchAssetsForHeading`, use `fetchItemsForHeading`
+* Remove unnecessary `notes` argument from `validateAsset`
+* The second argument of `downloadAsset` and `getAssetDownloadUrl` is now an option instead of a `type`. Type should now be included in the options object. `dpi` and `dimension` options are also now available.
+
+## Other
+* Added `createColorAsset`
+* Added `createSupportingContent`
+* Added `createGuide`
+* Added `createCodeSnippet`
+* Added `createColorAsset`
+* `createFileAsset` now supports creating font files
+
 # 1.0.2
 * Add `validateAsset`
 

@@ -7,7 +7,6 @@
  * 2. Populate the new config file with data for your test space
  * 3. Run `npm run integration-test`
  */
-
 import { strict as assert } from "assert";
 import lingo, { AssetType, ItemType, Kit, LingoError, Section } from "../src/index";
 import config from "./testConfig";
@@ -78,7 +77,10 @@ describe("Read requests", () => {
   describe("Fetching kit content", () => {
     it("Should fetch section and items", async () => {
       const section = await lingo.fetchSection(config.sectionID, 0);
-      assert(section.id === config.sectionID, "expected sections");
+      assert(
+        section.id === config.sectionID || section.shortId === config.sectionID,
+        "expected sections"
+      );
       assert(section.items.length > 0, "expected items");
     });
 
@@ -94,21 +96,6 @@ describe("Read requests", () => {
         items.length === section.counts.items,
         `Unexpected item count with auto paging ${items.length} / ${section.counts.items}`
       );
-    });
-
-    describe("Depercated ", () => {
-      beforeAll(() => {
-        jest.spyOn(console, "error").mockImplementation(() => {
-          // Hide
-        });
-      });
-      afterAll(() => {
-        (console.error as jest.Mock).mockRestore();
-      });
-      it("Should fetch items under heading by id: deprecated", async () => {
-        const result = await lingo.fetchAssetsForHeading(config.sectionID, config.headingID, 0);
-        assert.equal(result.length, 1, "Unexpected item count under heading");
-      });
     });
 
     it("Should fetch items under heading by id", async () => {
@@ -168,8 +155,21 @@ describe("Read requests", () => {
 
     it("Should fetch library tag results", async () => {
       const results = await lingo.search().tags().matchingKeyword("logo").fetch();
-      assert(results, "expected sections");
       assert(results.results, "expected results");
+    });
+
+    it("Should assets from date ", async () => {
+      const results = await lingo.search().assets().createdAt({ exactly: "2021-03-10" }).fetch();
+      assert(results.results.length, "expected results");
+    });
+    it("Should assets from date range ", async () => {
+      const results = await lingo
+        .search()
+        .assets()
+        .createdAt({ after: "2021-03-05", before: "2021-03-11" })
+        .fetch();
+      assert(results, "expected sections");
+      assert(results.results.length, "expected results");
     });
   });
 });
@@ -181,7 +181,7 @@ describe.skip("Write requests", () => {
 
   describe("Kit creation", () => {
     let kit: Kit;
-    beforeEach(async () => {
+    beforeAll(async () => {
       kit = await lingo.createKit("My Kit");
     });
 
@@ -191,7 +191,7 @@ describe.skip("Write requests", () => {
     });
     describe("Kit content creation", () => {
       let section: Section;
-      beforeEach(async () => {
+      beforeAll(async () => {
         section = await lingo.createSection(kit.kitId, "My Kit");
       });
 
@@ -200,32 +200,157 @@ describe.skip("Write requests", () => {
         assert.equal(section.kitId, kit.kitId);
       });
 
-      it("Should create a heading", async () => {
-        const heading = await lingo.createHeading(kit.kitId, section.id, "Logos");
-        assert.equal(heading.data.content, "Logos");
-        assert.equal(heading.type, ItemType.Heading);
-        assert.equal(heading.sectionId, section.id);
-        assert.equal(heading.kitId, kit.kitId);
-      });
-
       it("Should create an inline note", async () => {
-        const note = await lingo.createNote(kit.kitId, section.id, "A note about the logos");
+        const note = await lingo.createNote({
+          kitId: kit.kitId,
+          sectionId: section.id,
+          content: "A note about the logos",
+        });
         assert.equal(note.data.content, "A note about the logos");
         assert.equal(note.type, ItemType.Note);
         assert.equal(note.sectionId, section.id);
         assert.equal(note.kitId, kit.kitId);
       });
 
-      // We need to accesst this to bump the timeout
-      // eslint-disable-next-line func-names
-      it("Should create a asset from SVG file", async function () {
-        this.timeout(20 * 1000);
-        const filePath = __dirname + "/Beer.svg";
-        const item = await lingo.createAsset(filePath, kit.kitId, section.id);
-        const asset = item.asset;
-        assert.equal(item.type, ItemType.Asset);
-        assert.equal(asset.type, AssetType.SVG);
-        assert.equal(asset.name, "Beer");
+      it("Should create a heading", async () => {
+        const heading = await lingo.createHeading({
+          kitId: kit.kitId,
+          sectionId: section.id,
+          content: "Logos",
+        });
+        expect(heading.data.content).toEqual("Logos");
+        expect(heading.type).toEqual(ItemType.Heading);
+        expect(heading.sectionId).toEqual(section.id);
+        expect(heading.kitId).toEqual(kit.kitId);
+      });
+
+      describe("Guides", () => {
+        it("Should create a text only guide", async () => {
+          const guide = await lingo.createGuide({
+            kitId: kit.kitId,
+            sectionId: section.id,
+            content: "Use formal language.",
+            title: "Do",
+          });
+          expect(guide.data.content).toEqual("Use formal language.");
+          expect(guide.data.title).toEqual("Do");
+          expect(guide.data.color).toEqual("green");
+          expect(guide.type).toEqual(ItemType.Guide);
+          expect(guide.sectionId).toEqual(section.id);
+          expect(guide.kitId).toEqual(kit.kitId);
+          expect(guide.data.displayStyle).toEqual("text_only");
+          expect(guide.assetId).toBeNull();
+        });
+        it("Should create a guide with an image", async () => {
+          const file = __dirname + "/Logo.png";
+          const guide = await lingo.createGuide({
+            kitId: kit.kitId,
+            sectionId: section.id,
+            content: "Change the color of the logo.",
+            title: "Don't",
+            file,
+          });
+          expect(guide.data.content).toEqual("Change the color of the logo.");
+          expect(guide.data.title).toEqual("Don't");
+          expect(guide.data.color).toEqual("red");
+          expect(guide.type).toEqual(ItemType.Guide);
+          expect(guide.sectionId).toEqual(section.id);
+          expect(guide.kitId).toEqual(kit.kitId);
+          expect(guide.data.displayStyle).toEqual("image");
+          expect(guide.assetId).not.toBeNull();
+          expect(guide.asset.type).toEqual(AssetType.PNG);
+        }, 10000);
+      });
+
+      it("Should create a supporting image", async () => {
+        const file = __dirname + "/Logo.png";
+        const guide = await lingo.createSupportingContent({
+          file,
+          kitId: kit.kitId,
+          sectionId: section.id,
+        });
+        expect(guide.data.content).toBeUndefined();
+        expect(guide.type).toEqual(ItemType.SupportingContent);
+        expect(guide.sectionId).toEqual(section.id);
+        expect(guide.kitId).toEqual(kit.kitId);
+        expect(guide.assetId).not.toBeNull();
+        expect(guide.asset.type).toEqual(AssetType.PNG);
+      });
+
+      describe("Color assets", () => {
+        it("Should create a color asset without an item", async () => {
+          const { asset, item } = await lingo.createColorAsset("#FFFFFF", {
+            name: "White",
+            notes: "A white color",
+          });
+          expect(item).toBeUndefined();
+          expect(asset.type).toEqual(AssetType.Color);
+        });
+
+        it("Should create a color asset with an item", async () => {
+          const { asset, item } = await lingo.createColorAsset(
+            "#AAFFFF",
+            {
+              name: "White",
+              notes: "A white color",
+            },
+            { kitId: kit.kitId, sectionId: section.id }
+          );
+          expect(asset).toBeUndefined();
+          expect(item.asset.type).toEqual(AssetType.Color);
+          expect(item.asset.colors.length).toEqual(1);
+          expect(item.type).toEqual(ItemType.Asset);
+        });
+      });
+
+      describe("File assets", () => {
+        it(
+          "Should create file asset with an item",
+          async () => {
+            const filePath = __dirname + "/Logo.svg";
+            const response = await lingo.createFileAsset(
+              filePath,
+              {},
+              { kitId: kit.kitId, sectionId: section.id }
+            );
+            expect(response.asset).toBeUndefined();
+            const item = response.item;
+            const asset = item.asset;
+            expect(item.kitId).toEqual(kit.kitId);
+            expect(item.sectionId).toEqual(section.id);
+            expect(item.type).toEqual(ItemType.Asset);
+            expect(asset.type).toEqual(AssetType.SVG);
+            expect(asset.name).toEqual("Logo");
+          },
+          20 * 1000
+        );
+
+        it(
+          "Should create file asset without an item",
+          async () => {
+            const filePath = __dirname + "/Logo.svg";
+            const response = await lingo.createFileAsset(filePath);
+            expect(response.item).toBeUndefined();
+            const asset = response.asset;
+            expect(asset.type).toEqual(AssetType.SVG);
+            expect(asset.name).toEqual("Logo");
+          },
+          20 * 1000
+        );
+
+        it(
+          "Should create a font asset",
+          async () => {
+            const filePath = __dirname + "/Inter-Light.otf";
+            const response = await lingo.createFileAsset(filePath);
+            expect(response.item).toBeUndefined();
+            const asset = response.asset;
+            expect(asset.type).toEqual(AssetType.TextStyle);
+            expect(asset.meta.font.family).toEqual("Inter Light");
+            expect(asset.name).toEqual("Inter-Light");
+          },
+          20 * 1000
+        );
       });
     });
   });

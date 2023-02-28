@@ -241,6 +241,48 @@ export class Search {
     return this;
   }
 
+  /**
+   * Find results created on a specific date or within a date range. Provide either `execlty` or `before` and `after` to specify a range.
+   * @param exactly File assets created on a specific date
+   * @param before File assets created before a date
+   * @param after File assets created after a date
+   * @returns The chainable search object
+   */
+  createdAt(dates: {
+    before?: string | Date;
+    after?: string | Date;
+    exactly?: string | Date;
+  }): Search {
+    function formatDate(date: string | Date): string {
+      if (date instanceof Date) {
+        const d = date as Date;
+        return [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()].join("-");
+      }
+      return date;
+    }
+
+    if (dates.exactly) {
+      this._filters = this._filters.filter(f => f.type !== "date");
+      this._filters.push({
+        type: "date",
+        operator_values: {
+          eq: formatDate(dates.exactly),
+        },
+      });
+    } else if (dates.before || dates.after) {
+      this._filters = this._filters.filter(f => f.type !== "date");
+      this._filters.push({
+        type: "date",
+        operator_values: {
+          gte: formatDate(dates.after),
+          lte: formatDate(dates.before),
+        },
+      });
+    }
+
+    return this;
+  }
+
   private created(relation: "before" | "after", value: Date | string | number): Search {
     if (typeof value === "number") {
       this._filters.push({ type: relation, period: "day", length: value });
@@ -260,15 +302,20 @@ export class Search {
    * Find results created after a given date.
    * @param value A Date object, a date string (yyyy-mm-dd), or a number of days previous to now
    * @returns The chainable search object
+   *
+   * @deprecated Use `createdAt` instead
    */
   after(value: Date | string | number): Search {
     return this.created("after", value);
   }
 
   /**
+
    * Find results created before a given date.
    * @param value A Date object, a date string (yyyy-mm-dd), or a number of days previous to now
    * @returns The chainable search object
+   *
+   * @deprecated Use `createdAt` instead
    */
   before(value: Date | string | number): Search {
     return this.created("before", value);

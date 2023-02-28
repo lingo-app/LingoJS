@@ -20,10 +20,7 @@
     "**/.pnp.*": true
   },
   "eslint.nodePath": ".yarn/sdks",
-  "eslint.validate": [
-    "typescript",
-    "javascript"
-  ],
+  "eslint.validate": ["typescript", "javascript"],
   "prettier.prettierPath": ".yarn/sdks/prettier/index.js",
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true

@@ -40,7 +40,7 @@ export enum ItemType {
   Asset = "asset",
   Heading = "heading",
   Note = "inline_note",
-  SupportingImage = "supporting_image",
+  SupportingContent = "supporting_image",
   CodeSnippet = "code_snippet",
   Guide = "guide",
 }
@@ -131,6 +131,10 @@ export interface Item {
   data: {
     content?: string;
     background?: string;
+    codeLanguage?: string;
+    displayStyle?: string;
+    title?: string;
+    color?: string;
   };
 }
 
@@ -143,7 +147,38 @@ export interface Color {
   saturation: number; // 0 - 100
 }
 
-export type AssetMeta = Record<string, any>;
+export type AssetFilecuts = {
+  availableTypes: [
+    {
+      enabled: boolean;
+      resizable: boolean;
+      setDpi: boolean;
+      type: string;
+    }
+  ];
+  presets: [
+    {
+      description: string;
+      size: string;
+      type: string;
+    }
+  ];
+};
+
+export type AssetMeta = {
+  assetProcessing?: "complete" | "processing" | "error";
+  filecuts?: AssetFilecuts;
+  font: {
+    display_name: string;
+    extension: string;
+    family: string;
+    font_name: string;
+    source: "file" | "google-fonts";
+    stylesheet_url: string;
+    variant: string;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} & Record<string, any>;
 
 export interface Asset {
   id: string;
@@ -167,7 +202,7 @@ export interface SearchResult {
   offset: number;
   limit: number;
   results: {
-    type: "item" | "section" | "kit";
-    object: Item | Kit | Section;
+    type: "item" | "section" | "kit" | "asset";
+    object: Item | Kit | Section | Asset;
   }[];
 }
