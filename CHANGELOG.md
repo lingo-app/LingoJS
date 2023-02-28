@@ -1,3 +1,6 @@
+# 2.0.2
+* Update asset meta types
+
 # 2.0.1
 * Allow creating assets with dateAdded and dateUpdated
 * `validateAsset` data option is now optional
