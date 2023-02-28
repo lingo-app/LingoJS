@@ -174,7 +174,7 @@ describe("Read requests", () => {
   });
 });
 
-describe.skip("Write requests", () => {
+describe("Write requests", () => {
   beforeAll(() => {
     lingo.setup(config.spaceID, config.apiToken);
   });
@@ -301,6 +301,22 @@ describe.skip("Write requests", () => {
           expect(item.asset.colors.length).toEqual(1);
           expect(item.type).toEqual(ItemType.Asset);
         });
+
+        it("Should create a color asset with dates", async () => {
+          const { asset, item } = await lingo.createColorAsset(
+            "#AAFFFF",
+            {
+              name: "White",
+              notes: "A white color",
+              dateAdded: new Date("2020-01-01"),
+            },
+            { kitId: kit.kitId, sectionId: section.id }
+          );
+          expect(asset).toBeUndefined();
+          expect(item.asset.type).toEqual(AssetType.Color);
+          expect(item.asset.colors.length).toEqual(1);
+          expect(item.type).toEqual(ItemType.Asset);
+        });
       });
 
       describe("File assets", () => {
@@ -330,6 +346,21 @@ describe.skip("Write requests", () => {
           async () => {
             const filePath = __dirname + "/Logo.svg";
             const response = await lingo.createFileAsset(filePath);
+            expect(response.item).toBeUndefined();
+            const asset = response.asset;
+            expect(asset.type).toEqual(AssetType.SVG);
+            expect(asset.name).toEqual("Logo");
+          },
+          20 * 1000
+        );
+
+        it(
+          "Should create file asset with custom dates",
+          async () => {
+            const filePath = __dirname + "/Logo.svg";
+            const response = await lingo.createFileAsset(filePath, {
+              dateAdded: new Date("2020-01-01"),
+            });
             expect(response.item).toBeUndefined();
             const asset = response.asset;
             expect(asset.type).toEqual(AssetType.SVG);

@@ -5,7 +5,7 @@ import fetch from "node-fetch";
 
 import LingoError from "./lingoError";
 import { AssetType, ItemType, Kit, Section, Item, KitOutline, Asset } from "./types";
-import { getUploadData, parseJSONResponse } from "./utils";
+import { formatDate, getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
 
@@ -425,6 +425,8 @@ class Lingo {
       name?: string;
       notes?: string;
       keywords?: string;
+      dateAdded?: Date;
+      dateUpdated?: Date;
     },
     item?: AssetItem
   ): Promise<{ asset?: Asset; item?: Item }> {
@@ -443,8 +445,11 @@ class Lingo {
         }
       : undefined;
 
+    const { dateAdded, dateUpdated, ...otherData } = data ?? {};
     const assetData = {
-      ...data,
+      ...otherData,
+      date_added: formatDate(dateAdded),
+      date_updated: formatDate(dateUpdated),
       item: _item,
       type: AssetType.Color,
       colors: [
@@ -458,6 +463,7 @@ class Lingo {
       ],
     };
 
+    console.log(assetData);
     const res = await this.callAPI("POST", "/assets", {
       data: assetData,
     });
@@ -473,7 +479,7 @@ class Lingo {
    */
   async validateAsset(
     file: string,
-    data: { type?: AssetType }
+    data?: { type?: AssetType }
   ): Promise<{ type: string; filepath: string; name: string }> {
     try {
       const { file: stream, metadata } = getUploadData(file, data);
@@ -510,6 +516,8 @@ class Lingo {
       type?: AssetType;
       notes?: string;
       keywords?: string;
+      dateAdded?: Date;
+      dateUpdated?: Date;
     },
     item?: AssetItem
   ): Promise<{ item?: Item; asset?: Asset }> {
@@ -523,11 +531,17 @@ class Lingo {
       type?: AssetType;
       notes?: string;
       keywords?: string;
+      dateAdded?: Date;
+      dateUpdated?: Date;
     },
     item?: AssetItem & { type?: ItemType; data?: ItemData }
   ) {
-    const { file: fileData, metadata } = getUploadData(file, data),
-      json = _merge({}, metadata, data);
+    const { dateAdded, dateUpdated, ...otherData } = data ?? {};
+    const { file: fileData, metadata } = getUploadData(file, otherData),
+      json = _merge({}, metadata, otherData, {
+        date_added: formatDate(dateAdded),
+        date_updated: formatDate(dateUpdated),
+      });
 
     const fonts = ["TTF", "OTF", "WOFF", "WOFF2"];
     if (fonts.includes(metadata.type.toUpperCase())) {

@@ -1,3 +1,8 @@
+# 2.0.1
+* Allow creating assets with dateAdded and dateUpdated
+* `validateAsset` data option is now optional
+
+
 # 2.0.0
 ## Breaking
 * `createAsset` has been renamed `createFileAsset` and item data is now optionally provided in the `data` argument meaning that assets can now be created in the library without being added to a kit
