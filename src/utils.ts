@@ -77,6 +77,11 @@ function normalizeResponse(object: unknown) {
   return object;
 }
 
+export function formatDate(date?: Date): number {
+  if (!date) return undefined;
+  return date.getTime() / 1000;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function parseJSONResponse(body: Record<string, unknown>): any {
   if (body.success === true) {

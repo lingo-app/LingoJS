@@ -66,7 +66,7 @@ describe("File utils", () => {
 
   it("should validate the file", async () => {
     const filePath = __dirname + "/" + "Logo.svg";
-    const { name, type } = await lingo.validateAsset(filePath, {});
+    const { name, type } = await lingo.validateAsset(filePath);
     expect(name).toEqual("Logo");
     expect(type).toEqual("svg");
   });
@@ -75,7 +75,7 @@ describe("File utils", () => {
     const filePath = __dirname + "/not-" + fileName;
     try {
       // console.log("Checking file");
-      await lingo.validateAsset(filePath, {});
+      await lingo.validateAsset(filePath);
       // console.log("Checked");
       throw new Error("Expected to fail");
     } catch (e) {
