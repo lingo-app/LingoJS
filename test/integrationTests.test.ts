@@ -377,6 +377,7 @@ describe("Write requests", () => {
             expect(response.item).toBeUndefined();
             const asset = response.asset;
             expect(asset.type).toEqual(AssetType.TextStyle);
+            expect(asset.meta.font.displayName).toEqual("Inter Light");
             expect(asset.meta.font.family).toEqual("Inter Light");
             expect(asset.name).toEqual("Inter-Light");
           },

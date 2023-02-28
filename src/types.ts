@@ -169,12 +169,12 @@ export type AssetMeta = {
   assetProcessing?: "complete" | "processing" | "error";
   filecuts?: AssetFilecuts;
   font: {
-    display_name: string;
+    displayName: string;
     extension: string;
     family: string;
-    font_name: string;
+    fontName: string;
     source: "file" | "google-fonts";
-    stylesheet_url: string;
+    stylesheetUrl: string;
     variant: string;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
