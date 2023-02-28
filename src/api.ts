@@ -463,7 +463,6 @@ class Lingo {
       ],
     };
 
-    console.log(assetData);
     const res = await this.callAPI("POST", "/assets", {
       data: assetData,
     });
