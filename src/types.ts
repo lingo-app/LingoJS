@@ -206,3 +206,15 @@ export interface SearchResult {
     object: Item | Kit | Section | Asset;
   }[];
 }
+
+type ChangeData = { new: undefined; previous: unknown };
+export interface ChangelogEvent {
+  event: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  // Nested data will only have new/previous fields for the lowest level
+  data: Record<string, ChangeData | Record<string, ChangeData>>;
+}

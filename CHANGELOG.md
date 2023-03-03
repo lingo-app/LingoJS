@@ -1,3 +1,6 @@
+# 2.0.3
+* Add `fetchAssetChangelog` to retrieve the changelog for an asset
+
 # 2.0.2
 * Update asset meta types
 

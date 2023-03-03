@@ -4,7 +4,16 @@ import QueryString from "query-string";
 import fetch from "node-fetch";
 
 import LingoError from "./lingoError";
-import { AssetType, ItemType, Kit, Section, Item, KitOutline, Asset } from "./types";
+import {
+  AssetType,
+  ItemType,
+  Kit,
+  Section,
+  Item,
+  KitOutline,
+  Asset,
+  ChangelogEvent,
+} from "./types";
 import { formatDate, getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
@@ -206,6 +215,18 @@ class Lingo {
     } else {
       return await res.buffer();
     }
+  }
+
+  /**
+   * Fetch a list of changelog events for the asset
+   * @param id The id of the asset
+   * @returns a list of changelog events
+   */
+  async fetchAssetChangelog(id: string): Promise<[ChangelogEvent]> {
+    const path = `/assets/${id}/changelog`;
+    const res = await this.callAPI("GET", path);
+    console.log(res);
+    return res.changelog;
   }
 
   // MARK : Creating Content
