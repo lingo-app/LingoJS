@@ -225,7 +225,6 @@ class Lingo {
   async fetchAssetChangelog(id: string): Promise<[ChangelogEvent]> {
     const path = `/assets/${id}/changelog`;
     const res = await this.callAPI("GET", path);
-    console.log(res);
     return res.changelog;
   }
 
