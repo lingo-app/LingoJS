@@ -8,7 +8,7 @@
  * 3. Run `npm run integration-test`
  */
 import { strict as assert } from "assert";
-import lingo, { AssetType, ItemType, Kit, LingoError, Section } from "../src/index";
+import lingo, { AssetType, ItemType, Kit, LingoError, Section, Change } from "../src/index";
 import config from "./testConfig";
 
 const validConfig =
@@ -131,7 +131,10 @@ describe("Read requests", () => {
   describe("Fetching asset changelog", () => {
     it("Should fetch asset changelog", async () => {
       const result = await lingo.fetchAssetChangelog(config.assetID);
-      assert(result[0].event == "asset.created");
+      expect(result[0].event).toEqual("asset.created");
+      expect(result[0].data.notes).toEqual("");
+      expect(result[1].data.notes.new).toEqual("This is a note");
+      expect(result[1].data.notes.previous).toEqual("");
     });
   });
 

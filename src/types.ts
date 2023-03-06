@@ -207,14 +207,20 @@ export interface SearchResult {
   }[];
 }
 
-type ChangeData = { new: undefined; previous: unknown };
-export interface ChangelogEvent {
+export type Change<T> = { new: T; previous: T };
+
+type ChangeData<T> = {
+  [key in keyof T]?: T[key] extends object ? ChangeData<T[key]> : Change<T[key]>;
+};
+
+export interface ChangelogEvent<T> {
   event: string;
   user?: {
     id: number;
     name: string;
     email: string;
   };
-  // Nested data will only have new/previous fields for the lowest level
-  data: Record<string, ChangeData | Record<string, ChangeData>>;
+  data: T;
 }
+
+export type Changelog<T> = [ChangelogEvent<T>, ...ChangelogEvent<ChangeData<T>>[]];

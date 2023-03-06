@@ -4,16 +4,7 @@ import QueryString from "query-string";
 import fetch from "node-fetch";
 
 import LingoError from "./lingoError";
-import {
-  AssetType,
-  ItemType,
-  Kit,
-  Section,
-  Item,
-  KitOutline,
-  Asset,
-  ChangelogEvent,
-} from "./types";
+import { AssetType, ItemType, Kit, Section, Item, KitOutline, Asset, Changelog } from "./types";
 import { formatDate, getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
@@ -222,7 +213,7 @@ class Lingo {
    * @param id The id of the asset
    * @returns a list of changelog events
    */
-  async fetchAssetChangelog(id: string): Promise<[ChangelogEvent]> {
+  async fetchAssetChangelog(id: string): Promise<Changelog<Asset>> {
     const path = `/assets/${id}/changelog`;
     const res = await this.callAPI("GET", path);
     return res.changelog;
