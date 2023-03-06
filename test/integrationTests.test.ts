@@ -8,7 +8,7 @@
  * 3. Run `npm run integration-test`
  */
 import { strict as assert } from "assert";
-import lingo, { AssetType, ItemType, Kit, LingoError, Section, Change } from "../src/index";
+import lingo, { AssetType, ItemType, Kit, LingoError, Section } from "../src/index";
 import config from "./testConfig";
 
 const validConfig =
