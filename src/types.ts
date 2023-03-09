@@ -206,3 +206,21 @@ export interface SearchResult {
     object: Item | Kit | Section | Asset;
   }[];
 }
+
+export type Change<T> = { new: T; previous: T };
+
+type ChangeData<T> = {
+  [key in keyof T]?: T[key] extends object ? ChangeData<T[key]> : Change<T[key]>;
+};
+
+export interface ChangelogEvent<T> {
+  event: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  data: T;
+}
+
+export type Changelog<T> = [ChangelogEvent<T>, ...ChangelogEvent<ChangeData<T>>[]];

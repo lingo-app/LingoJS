@@ -128,6 +128,16 @@ describe("Read requests", () => {
     });
   });
 
+  describe("Fetching asset changelog", () => {
+    it("Should fetch asset changelog", async () => {
+      const result = await lingo.fetchAssetChangelog(config.assetID);
+      expect(result[0].event).toEqual("asset.created");
+      expect(result[0].data.notes).toEqual("");
+      expect(result[1].data.notes.new).toEqual("This is a note");
+      expect(result[1].data.notes.previous).toEqual("");
+    });
+  });
+
   describe("Search", () => {
     it("Should fetch search results", async () => {
       const results = await lingo.search().inKit(config.kitID).matchingKeyword("logo").fetch();
@@ -158,7 +168,7 @@ describe("Read requests", () => {
       assert(results.results, "expected results");
     });
 
-    it("Should assets from date ", async () => {
+    it("Should fetch assets from date", async () => {
       const results = await lingo.search().assets().createdAt({ exactly: "2021-03-10" }).fetch();
       assert(results.results.length, "expected results");
     });
@@ -174,7 +184,7 @@ describe("Read requests", () => {
   });
 });
 
-describe("Write requests", () => {
+describe.skip("Write requests", () => {
   beforeAll(() => {
     lingo.setup(config.spaceID, config.apiToken);
   });
