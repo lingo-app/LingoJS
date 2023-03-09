@@ -3,6 +3,20 @@ import path from "path";
 import LingoError from "./lingoError";
 import btoa from "btoa";
 
+function isUUID(str: string) {
+  const uuidPattern = "^(X{8}-X{4}-4X{3}-[89abAB]X{3}-X{12})".replace(/X/g, "[0-9A-F]");
+  const match = str.match(uuidPattern) || [];
+  return match && match[1];
+}
+
+export function parseIdentifier(identifier: string): string {
+  if (!identifier) return identifier;
+  // UUID
+  if (isUUID(identifier)) return identifier;
+  // Parse named short id
+  return identifier.split("-").pop();
+}
+
 export function parseFilePath(filePath: string): { filename: string; extension: string } {
   const extension = path.extname(filePath),
     filename = path.basename(filePath, extension);
