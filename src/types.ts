@@ -195,6 +195,13 @@ export interface Asset {
   dateAdded: string;
   dateUpdated: string;
   fileUpdated: string;
+  permalink: string;
+  thumbnails: {
+    24: string;
+    292: string;
+    480: string;
+    1232: string;
+  };
 }
 
 export interface SearchResult {
