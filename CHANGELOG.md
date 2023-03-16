@@ -1,3 +1,6 @@
+# 2.0.4
+* Add thumbnails and permalink to Asset type
+
 # 2.0.3
 * Add `fetchAssetChangelog` to retrieve the changelog for an asset
 
