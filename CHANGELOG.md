@@ -32,6 +32,7 @@
 * Add `validateAsset`
 
 # 1.0
+* Rename the pacakge to @lingo-app/node
 * Add support for write APIs
 * Overall refactor to improve tooling and code organization
 
