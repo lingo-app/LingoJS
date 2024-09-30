@@ -4,7 +4,7 @@ import _merge from "lodash/merge";
 import lingo from ".";
 import LingoError from "./lingoError";
 import { AssetType, ItemData, ItemType } from "./types";
-import { formatDate, parseFilePath, parseJSONResponse, resolveFilePath, retry } from "./utils";
+import { formatDate, parseFilePath, resolveFilePath, retry } from "./utils";
 
 export type UploadData = {
   name?: string;

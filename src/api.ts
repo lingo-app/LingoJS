@@ -1,5 +1,3 @@
-import FormData from "form-data";
-import _merge from "lodash/merge";
 import QueryString from "query-string";
 import fetch from "node-fetch";
 
