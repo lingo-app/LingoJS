@@ -6,7 +6,13 @@
 import { ReadStream } from "fs";
 import { strict as assert } from "assert";
 import lingo, { AssetType, ItemType, LingoError } from "../src/index";
-import { getUploadData, parseFilePath, resolveFilePath, parseJSONResponse } from "../src/utils";
+import {
+  getUploadData,
+  parseFilePath,
+  resolveFilePath,
+  parseJSONResponse,
+  retry,
+} from "../src/utils";
 
 describe("Library exports", () => {
   it("Makes the Error object availble", () => {
@@ -19,6 +25,45 @@ describe("Library exports", () => {
   });
 });
 
+describe.only("Retry", () => {
+  it("Should not retry if retries is 0", async () => {
+    const action = jest.fn();
+    action.mockImplementation(() => {
+      throw new Error("Fail");
+    });
+
+    expect(async () => {
+      await retry(action, 0);
+    }).rejects.toThrow();
+    expect(action).toHaveBeenCalledTimes(1);
+  });
+  it("Should throw after reties", async () => {
+    const action = jest.fn();
+    action.mockImplementation(() => {
+      throw new Error("Fail");
+    });
+
+    expect(async () => await retry(action, 2)).rejects.toThrow();
+    expect(action).toHaveBeenCalledTimes(3);
+  });
+
+  it("Should throw after max retries", async () => {
+    let count = 0;
+    const action = jest.fn();
+    action.mockImplementation(() => {
+      count++;
+      if (count > 1) {
+        return "Success";
+      } else {
+        throw new Error("Fail");
+      }
+    });
+
+    const result = await retry(action, 2);
+    expect(action).toHaveBeenCalledTimes(2);
+    expect(result).toEqual("Success");
+  });
+});
 describe("File utils", () => {
   const fileName = "Logo.svg";
 

@@ -1,3 +1,7 @@
+# 2.1
+* Under the hood, files larger than 20mb will be uploaded in chunks
+* Adds automatic retry for uploads
+
 # 2.0.4
 * Add thumbnails and permalink to Asset type
 

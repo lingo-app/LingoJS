@@ -37,6 +37,9 @@ export function getUploadData(
   }
   const fileData = fs.createReadStream(filePath);
 
+  const status = fs.statSync(filePath);
+  status.size;
+
   if (!type) {
     throw new LingoError(
       LingoError.Code.InvalidParams,
@@ -107,4 +110,16 @@ export function encodeUnicode(value: any): string {
   }
   const binary = encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, toSolidBytes);
   return btoa(binary);
+}
+
+export async function retry<T>(action: () => Promise<T>, retries = 2): Promise<T> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await action();
+    } catch (error) {
+      if (i + 1 > retries) {
+        throw error;
+      }
+    }
+  }
 }
