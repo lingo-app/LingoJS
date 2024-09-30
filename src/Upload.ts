@@ -24,6 +24,10 @@ export type AssetItem = {
 const MAX_UNCHUNKED_UPLOAD_SIZE = 20000000;
 const MAX_UPLOAD_CHUNK_SIZE = 10000000;
 
+/**
+ * An upload is created for the underlying asset file and its metadata.
+ * Item data can be provided when callin upload.
+ */
 export class Upload {
   size: number;
   filePath: string;
@@ -72,6 +76,11 @@ export class Upload {
     this.assetData = json;
   }
 
+  /**
+   * Begin the file upload.
+   * @param item Optional item data to place the asset in a  kit. If no item is provided, the asset will be uploaded to the library.
+   * @returns
+   */
   async upload(item?: AssetItem & { type?: ItemType; data?: ItemData }) {
     const json: Record<string, unknown> = { ...this.assetData };
     if (item) {
