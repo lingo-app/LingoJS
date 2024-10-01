@@ -1,3 +1,11 @@
+export type ItemData = {
+  content?: string;
+  title?: string;
+  code_language?: string;
+  display_style?: string;
+  color?: string;
+};
+
 export enum AssetType {
   PNG = "PNG",
   JPG = "JPG",

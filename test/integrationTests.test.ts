@@ -184,7 +184,7 @@ describe("Read requests", () => {
   });
 });
 
-describe.skip("Write requests", () => {
+describe("Write requests", () => {
   beforeAll(() => {
     lingo.setup(config.spaceID, config.apiToken);
   });
@@ -392,6 +392,19 @@ describe.skip("Write requests", () => {
             expect(asset.name).toEqual("Inter-Light");
           },
           20 * 1000
+        );
+
+        it(
+          "Should create large file with chunked uploads",
+          async () => {
+            const filePath = __dirname + "/large-image.png";
+            const response = await lingo.createFileAsset(filePath);
+            expect(response.item).toBeUndefined();
+            const asset = response.asset;
+            expect(asset.type).toEqual(AssetType.PNG);
+            expect(asset.name).toEqual("large-image");
+          },
+          60 * 1000
         );
       });
     });

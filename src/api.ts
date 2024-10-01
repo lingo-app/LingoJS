@@ -1,27 +1,24 @@
-import FormData from "form-data";
-import _merge from "lodash/merge";
 import QueryString from "query-string";
 import fetch from "node-fetch";
 
 import LingoError from "./lingoError";
-import { AssetType, ItemType, Kit, Section, Item, KitOutline, Asset, Changelog } from "./types";
+import {
+  AssetType,
+  ItemType,
+  Kit,
+  Section,
+  Item,
+  KitOutline,
+  Asset,
+  Changelog,
+  ItemData,
+} from "./types";
 import { formatDate, getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
+import { AssetItem, Upload, UploadData } from "./Upload";
 
 type KitIncludes = "use_versions" | "versions" | null;
-type AssetItem = {
-  kitId: string;
-  sectionId: string;
-  displayOrder?: string | number;
-};
-type ItemData = {
-  content?: string;
-  title?: string;
-  code_language?: string;
-  display_style?: string;
-  color?: string;
-};
 
 class Lingo {
   baseURL = "https://api.lingoapp.com/1";
@@ -432,13 +429,7 @@ class Lingo {
    */
   async createColorAsset(
     color: string,
-    data?: {
-      name?: string;
-      notes?: string;
-      keywords?: string;
-      dateAdded?: Date;
-      dateUpdated?: Date;
-    },
+    data?: Omit<UploadData, "type">,
     item?: AssetItem
   ): Promise<{ asset?: Asset; item?: Item }> {
     const c = new TinyColor(color);
@@ -546,44 +537,8 @@ class Lingo {
     },
     item?: AssetItem & { type?: ItemType; data?: ItemData }
   ) {
-    const { dateAdded, dateUpdated, ...otherData } = data ?? {};
-    const { file: fileData, metadata } = getUploadData(file, otherData),
-      json = _merge({}, metadata, otherData, {
-        date_added: formatDate(dateAdded),
-        date_updated: formatDate(dateUpdated),
-      });
-
-    const fonts = ["TTF", "OTF", "WOFF", "WOFF2"];
-    if (fonts.includes(metadata.type.toUpperCase())) {
-      json.type = AssetType.TextStyle;
-      json.meta = {
-        font: { extension: metadata.type },
-      };
-    }
-
-    if (item) {
-      json.item = {
-        type: item.type ?? "asset",
-        kit_uuid: item.kitId,
-        section_uuid: item.sectionId,
-        display_order: item.displayOrder,
-        data: item.data,
-      };
-    }
-
-    const formData = new FormData();
-    formData.append("asset", fileData);
-    formData.append("json", JSON.stringify(json));
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    const { url, ...options } = this.requestParams("POST", "/assets", {
-      headers: formData.getHeaders(),
-      formData,
-    });
-
-    const response = await fetch(url, options),
-      _json = await response.json(),
-      res = parseJSONResponse(_json as Record<string, unknown>);
-    return res;
+    const upload = new Upload(file, data);
+    return await upload.upload(item);
   }
 
   // MARK : Making Requests
@@ -615,12 +570,16 @@ class Lingo {
       body = JSON.stringify(data);
     }
 
+    const contentType = headers?.["content-type"] ?? "application/json";
+    if (headers?.["content-type"]) {
+      delete headers["content-type"];
+    }
     return {
       url,
       method,
       body,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": contentType,
         ...headers,
         "x-lingo-client": "LingoJS",
         Authorization: this.auth,
@@ -633,7 +592,15 @@ class Lingo {
   async callAPI(method: string, path: string, options = {}): Promise<any> {
     const { url, ..._options } = this.requestParams(method, path, options);
     const response = await fetch(url, _options);
-    const json = await response.json();
+
+    const text = await response.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (parseError) {
+      console.error(text);
+      throw parseError;
+    }
     return parseJSONResponse(json as Record<string, unknown>);
   }
 }
