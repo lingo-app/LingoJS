@@ -550,7 +550,7 @@ class Lingo {
     return res.directLinks;
   }
 
-  async createDirectLink(assetId: string, name?: string): Promise<DirectLink[]> {
+  async createDirectLink(assetId: string, name?: string): Promise<DirectLink> {
     const res = await this.callAPI("POST", `/assets/${assetId}/direct_links`, {
       data: { name },
     });
