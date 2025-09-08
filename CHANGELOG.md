@@ -1,3 +1,6 @@
+# 2.2.1
+* First return type for `createDirectLink`
+
 # 2.2
 * Adds support for Direct Links
 
