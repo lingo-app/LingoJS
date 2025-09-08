@@ -1,3 +1,6 @@
+# 2.2
+* Adds support for Direct Links
+
 # 2.1
 * Under the hood, files larger than 20mb will be uploaded in chunks
 * Adds automatic retry for uploads
