@@ -212,6 +212,16 @@ export interface Asset {
   };
 }
 
+export type DirectLink = {
+  id: number;
+  assetId: string;
+  spaceId: number;
+  name: string;
+  url: string;
+  dateAdded: string;
+  dateUpdated: string;
+};
+
 export interface SearchResult {
   total: number;
   offset: number;

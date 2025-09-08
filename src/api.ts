@@ -17,6 +17,7 @@ import { formatDate, getUploadData, parseJSONResponse } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
 import { AssetItem, Upload, UploadData } from "./Upload";
+import { DirectLink } from ".";
 
 type KitIncludes = "use_versions" | "versions" | null;
 
@@ -539,6 +540,21 @@ class Lingo {
   ) {
     const upload = new Upload(file, data);
     return await upload.upload(item);
+  }
+
+  // MARK : Direct Links
+  // -------------------------------------------------------------------------------
+
+  async getDirectLinksForAsset(assetId: string): Promise<DirectLink[]> {
+    const res = await this.callAPI("GET", `/assets/${assetId}/direct_links`);
+    return res.directLinks;
+  }
+
+  async createDirectLink(assetId: string, name?: string): Promise<DirectLink[]> {
+    const res = await this.callAPI("POST", `/assets/${assetId}/direct_links`, {
+      data: { name },
+    });
+    return res.directLink;
   }
 
   // MARK : Making Requests
