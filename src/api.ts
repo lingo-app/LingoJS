@@ -13,7 +13,7 @@ import {
   Changelog,
   ItemData,
 } from "./types";
-import { formatDate, getUploadData, parseJSONResponse } from "./utils";
+import { formatDate, getUploadData, parseJSONResponse, parseIdentifier as parseID } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
 import { AssetItem, Upload, UploadData } from "./Upload";
@@ -33,6 +33,10 @@ class Lingo {
   setup(spaceId: number | string, token: string): void {
     this.spaceId = spaceId;
     this.auth = "Basic " + Buffer.from(spaceId + ":" + token).toString("base64");
+  }
+
+  parseIdentifier(identifier: string): string {
+    return parseID(identifier);
   }
 
   /**
