@@ -548,12 +548,22 @@ class Lingo {
 
   // MARK : Direct Links
   // -------------------------------------------------------------------------------
-
+  /**
+   *
+   * @param assetId The identifier of the asset to fetch direct links for
+   * @returns An array of direct links
+   */
   async getDirectLinksForAsset(assetId: string): Promise<DirectLink[]> {
     const res = await this.callAPI("GET", `/assets/${assetId}/direct_links`);
     return res.directLinks;
   }
 
+  /**
+   *
+   * @param assetId The asset idetnfier to create a direct links for
+   * @param name The name of the direct link
+   * @returns The newly created direct link
+   */
   async createDirectLink(assetId: string, name?: string): Promise<DirectLink> {
     const res = await this.callAPI("POST", `/assets/${assetId}/direct_links`, {
       data: { name },
