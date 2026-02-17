@@ -13,6 +13,7 @@ import {
   Asset,
   Changelog,
   DirectLink,
+  CustomField,
 } from "./types";
 import { formatDate, getUploadData, parseJSONResponse, snakeize } from "./utils";
 import { Search } from "./search";
@@ -54,6 +55,11 @@ class Lingo {
   async fetchKits(): Promise<Kit[]> {
     const res = await this.callAPI("GET", "/kits");
     return res.kits;
+  }
+
+  async fetchCustomFields(): Promise<CustomField[]> {
+    const res = await this.callAPI("GET", "/fields");
+    return res.fields;
   }
 
   /**
@@ -374,29 +380,15 @@ class Lingo {
 
   /**
    * @deprecated Support content is unavailable for spaces migrated to our latest architecture. Use createBanner instead.
-   * @param file a filepath for a PNG, JPG, or supported video file.
-   * @param kitId The id of the kit to create the item in
-   * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param displayOrder The relative order of the item in the section
+   * @param file A filepath for a PNG, JPG, or supported image file
+   * @param item Item data specifying where to place the banner (kitId, sectionId)
    * @returns The new item
    */
-  async createSupportingContent(position: {
-    file: string;
-    kitId: string;
-    sectionId: string;
-    displayOrder?: string | number;
-  }): Promise<Item> {
+  async createSupportingContent(file: string, item: ItemData): Promise<Item> {
     console.warn("Support content has been deprecated. Please use createBanner");
-    const { kitId, sectionId, file, displayOrder } = position;
-    const itemData = {
-      kitUuid: kitId,
-      sectionUuid: sectionId,
-      displayOrder,
-      type: ItemType.SupportingContent,
-    };
-
-    const { item } = await this._createFileAsset(file, {}, itemData);
-    return item;
+    const _item = merge({}, item, { type: ItemType.SupportingContent });
+    const { item: newItem } = await this._createFileAsset(file, {}, _item);
+    return newItem;
   }
 
   /**
@@ -405,7 +397,7 @@ class Lingo {
    * @param item Item data specifying where to place the banner (kitId, sectionId)
    * @returns The new item and asset
    */
-  async createBanner(file: string, item: ItemData) {
+  async createBanner(file: string, item: ItemData): Promise<Item> {
     const _item = merge({}, item, {
       type: ItemType.Asset,
       displayProperties: {
@@ -414,7 +406,8 @@ class Lingo {
         allowDownload: false,
       },
     });
-    return this._createFileAsset(file, {}, _item);
+    const res = this._createFileAsset(file, {}, _item);
+    return (await res).item;
   }
 
   /**
@@ -538,7 +531,7 @@ class Lingo {
     file: string,
     data?: AssetData,
     item?: ItemData & { type: ItemType }
-  ) {
+  ): Promise<{ item?: Item; asset?: Asset }> {
     const upload = new Upload(file, data, this.callAPI.bind(this));
     return await upload.upload(item);
   }

@@ -82,7 +82,7 @@ export interface Kit {
 }
 
 export interface KitVersion {
-  kitUuId: string;
+  kitUuid: string;
   status: Status;
   version: number;
   versionIdentifer: string;
@@ -224,11 +224,6 @@ export type AssetCustomFields = {
 // MARK : Asset
 // -------------------------------------------------------------------------------
 
-export type AssetProcesssingDetails = {
-  code: number;
-  message: string;
-};
-
 export interface Color {
   alpha: number; // 0 - 100
   brightness: number; // 0 - 100
@@ -268,7 +263,10 @@ export type AssetMeta = {
     stylesheetUrl: string;
     variant: string;
   };
-  assetProcessingDetails?: AssetProcesssingDetails;
+  assetProcessingDetails?: {
+    code: number;
+    message: string;
+  };
   assetProcessing: "processing" | "complete" | "error";
   content?: {
     url?: string;

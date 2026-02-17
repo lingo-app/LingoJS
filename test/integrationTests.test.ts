@@ -244,7 +244,7 @@ describe("Write requests", () => {
           expect(guide.type).toEqual(ItemType.Guide);
           expect(guide.sectionUuid).toEqual(section.uuid);
           expect(guide.kitUuid).toEqual(kit.kitUuid);
-          expect(guide.data.displayStyle).toEqual("text_only");
+          expect(guide.displayProperties.displayStyle).toEqual("text_only");
           expect(guide.assetId).toBeNull();
         });
         it("Should create a guide with an image", async () => {
@@ -259,7 +259,7 @@ describe("Write requests", () => {
           expect(guide.type).toEqual(ItemType.Guide);
           expect(guide.sectionUuid).toEqual(section.uuid);
           expect(guide.kitUuid).toEqual(kit.kitUuid);
-          expect(guide.data.displayStyle).toEqual("image");
+          expect(guide.displayProperties.displayStyle).toEqual("image");
           expect(guide.assetId).not.toBeNull();
           expect(guide.asset.type).toEqual(AssetType.PNG);
         }, 10000);
@@ -267,17 +267,17 @@ describe("Write requests", () => {
 
       it("Should create a banner", async () => {
         const file = __dirname + "/Logo.png";
-        const guide = await lingo.createSupportingContent({
-          file,
-          kitId: kit.kitUuid,
-          sectionId: section.uuid,
+        const item = await lingo.createBanner(file, {
+          kitUuid: kit.kitUuid,
+          sectionUuid: section.uuid,
         });
-        expect(guide.data.content).toBeUndefined();
-        expect(guide.type).toEqual(ItemType.SupportingContent);
-        expect(guide.sectionUuid).toEqual(section.uuid);
-        expect(guide.kitUuid).toEqual(kit.kitUuid);
-        expect(guide.assetId).not.toBeNull();
-        expect(guide.asset.type).toEqual(AssetType.PNG);
+        expect(item.data.content).toBeUndefined();
+        expect(item.type).toEqual(ItemType.Asset);
+        expect(item.sectionUuid).toEqual(section.uuid);
+        expect(item.kitUuid).toEqual(kit.kitUuid);
+        expect(item.assetId).not.toBeNull();
+        expect(item.asset.type).toEqual(AssetType.PNG);
+        expect(item.displayProperties);
       });
 
       describe("Color assets", () => {

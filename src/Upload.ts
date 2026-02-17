@@ -2,7 +2,7 @@ import fs from "fs";
 import FormData from "form-data";
 import _merge from "lodash/merge";
 import LingoError from "./lingoError";
-import { AssetType, ItemType } from "./types";
+import { Asset, AssetType, Item, ItemType } from "./types";
 import { formatDate, parseFilePath, resolveFilePath, retry, snakeize } from "./utils";
 import type { CallAPI } from "./search";
 
@@ -97,25 +97,25 @@ export class Upload {
    * @param item Optional item data to place the asset in a  kit. If no item is provided, the asset will be uploaded to the library.
    * @returns
    */
-  async upload(item?: ItemData & { type: ItemType }) {
+  async upload(item?: ItemData & { type: ItemType }): Promise<{ item?: Item; asset?: Asset }> {
     const json: Record<string, unknown> = { ...this.assetData };
     if (item) {
-      json.item = snakeize(item);
+      json.item = item;
     }
 
     if (this.size > MAX_UNCHUNKED_UPLOAD_SIZE) {
       const uploadId = await this.startUploadSession();
       await this.uploadChunks(uploadId, this.size);
       await this.completeUploadSession(uploadId, this.size);
-      json.upload_id = uploadId;
+      json.uploadId = uploadId;
       return await this.callApi("POST", "/assets", {
-        data: json,
+        data: snakeize(json),
       });
     } else {
       const formData = new FormData();
       const fileData = fs.createReadStream(this.filePath);
       formData.append("asset", fileData);
-      formData.append("json", JSON.stringify(json));
+      formData.append("json", JSON.stringify(snakeize(json)));
 
       return await this.callApi("POST", "/assets", {
         headers: formData.getHeaders(),

@@ -1,5 +1,33 @@
+# 3.0
+This is a major update with breaking changes to better support the latest features in Lingo.
+
+## Breaking
+* All `id` fields renamed to `uuid` (e.g. `Kit.kitId` → `Kit.kitUuid`, `Item.id` → `Item.uuid`). Including when passed to functions.
+* `createHeading`, `createNote`, `createGuide`, and `createCodeSnippet` now take content as the first argument and `ItemData` as the second
+* `createFileAsset` and `createColorAsset` item parameter now uses `kitUuid`/`sectionUuid`
+* `UploadData` type renamed to `AssetData`
+* `parseIdentifier` removed from `Lingo` class, now available as a standalone named export
+* `requestParams` is now private
+
+## New
+* `Lingo` constructor now accepts `(spaceId, token)` directly
+* `Lingo` available as a named export for creating multiple instances
+* `fetchCustomFields` for fetching all fields in a space.
+* `createLinkAsset` for creating URL/link assets
+* `createBanner` for creating full-width banner images
+* `fetchItemsInGallery` and `fetchAllItemsInGallery` for gallery pagination
+* `displayProperties` on items for size, alignment, captions, autoplay, and more
+* New asset types: `HEIC`, `WEBP`, `AVI`, `MP3`, `WAV`, `M4A`, `STL`, `OBJ`, `ZIP`, `URL`
+* New `Gallery` item type
+* Custom field types: `CustomField`, `CustomFieldOption`, `AssetCustomFields`
+* Expanded `AssetMeta` with `content`, `preview`, `duration`, and `figma` fields
+
+## Deprecations
+* `createSupportingContent` — use `createBanner` instead
+* `Item.data.background` and `Item.data.displayStyle` — use `displayProperties`
+
 # 2.2.1
-* First return type for `createDirectLink`
+* Fix return type for `createDirectLink`
 
 # 2.2
 * Adds support for Direct Links
