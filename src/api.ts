@@ -587,7 +587,7 @@ class Lingo {
       body = JSON.stringify(data);
     }
 
-    const contentType = formData ? null : headers?.["content-type"] ?? "application/json";
+    const contentType = formData ? null : (headers?.["content-type"] ?? "application/json");
     if (headers?.["content-type"]) {
       delete headers["content-type"];
     }
