@@ -1,5 +1,6 @@
 import QueryString from "query-string";
 import fetch from "node-fetch";
+import merge from "lodash/merge";
 
 import LingoError from "./lingoError";
 import {
@@ -11,13 +12,12 @@ import {
   KitOutline,
   Asset,
   Changelog,
-  ItemData,
+  DirectLink,
 } from "./types";
-import { formatDate, getUploadData, parseJSONResponse, parseIdentifier as parseID } from "./utils";
+import { formatDate, getUploadData, parseJSONResponse, snakeize } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
-import { AssetItem, Upload, UploadData } from "./Upload";
-import { DirectLink } from ".";
+import { ItemData, Upload, AssetData } from "./Upload";
 
 type KitIncludes = "use_versions" | "versions" | null;
 
@@ -25,18 +25,26 @@ class Lingo {
   baseURL = "https://api.lingoapp.com/1";
   private spaceId: number | string;
   private auth: string;
+
   /**
-   * Set your API auth credientials before using making any calls
-   * @param spaceID The id of your Lingo space
+   * Create a new Lingo API client
+   * @param spaceId The id of your Lingo space
+   * @param token An API token for your space
+   */
+  constructor(spaceId?: number | string, token?: string) {
+    if (spaceId && token) {
+      this.setup(spaceId, token);
+    }
+  }
+
+  /**
+   * Set your API auth credentials
+   * @param spaceId The id of your Lingo space
    * @param token An API token for your space
    */
   setup(spaceId: number | string, token: string): void {
     this.spaceId = spaceId;
     this.auth = "Basic " + Buffer.from(spaceId + ":" + token).toString("base64");
-  }
-
-  parseIdentifier(identifier: string): string {
-    return parseID(identifier);
   }
 
   /**
@@ -135,7 +143,7 @@ class Lingo {
     function isMatch(item: Item) {
       return (
         item.type === ItemType.Heading &&
-        (item.data.content === headingId || item.id === headingId || item.shortId === headingId)
+        (item.data.content === headingId || item.uuid === headingId || item.shortId === headingId)
       );
     }
     // eslint-disable-next-line no-constant-condition
@@ -161,19 +169,42 @@ class Lingo {
     }
   }
 
+  async fetchItemsInGallery(galleryId: string, version = 0, page = 1, limit = 50): Promise<Item[]> {
+    const path = `/items/${galleryId}`,
+      params = { qs: { v: version, page, limit, include: "items" } };
+    const res = await this.callAPI("GET", path, params);
+    return res.item.items;
+  }
+
+  async fetchAllItemsInGallery(galleryId: string, version = 0): Promise<Item[]> {
+    const limit = 200; // API Enforces <= 200
+    let page = 1,
+      results = [];
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const items = await this.fetchItemsInGallery(galleryId, version, page, limit);
+      results = [...results, ...items];
+      if (items.length < limit) {
+        return results;
+      }
+      page += 1;
+    }
+  }
+
   /**
    * Create a new search object to build and execute a search query
    * @returns A new search object
    */
   search(): Search {
-    return new Search();
+    return new Search(this.callAPI.bind(this));
   }
 
   /**
    * Prepare the file and get a url to download it
    *
    * @param id The uuid of the asset
-   * @param type The type of filecut to donwload, defaults to original
+   * @param options The download options (type, dimensions, dpi)
    * @returns A url to download the prepared file
    */
   async getAssetDownloadUrl(
@@ -190,7 +221,7 @@ class Lingo {
   /**
    *
    * @param id The id of the asset
-   * @param type The type of filecut to donwload, defaults to original
+   * @param options The download options (type, dimensions, dpi)
    * @returns A buffer with the file data
    */
   async downloadAsset(
@@ -241,131 +272,82 @@ class Lingo {
   /**
    * Create a new section
    *
-   * @param kitId The uuid of the kit to create the section in
+   * @param kitUuid The uuid of the kit to create the section in
    * @param name The name of the section
    * @returns The new section
    */
-  async createSection(kitId: string, name?: string): Promise<Section> {
+  async createSection(kitUuid: string, name?: string): Promise<Section> {
     const res = await this.callAPI("POST", "/sections", {
       data: {
-        kit_uuid: kitId,
+        kit_uuid: kitUuid,
         name,
       },
     });
     return res.section;
   }
 
-  private async _createItemWithoutAsset(
-    type: string,
-    context: {
-      kitId: string;
-      sectionId: string;
-      displayOrder?: string | number;
-    },
-    data: ItemData
-  ): Promise<Item> {
+  private async _createItemWithoutAsset(data: ItemData & { type: ItemType }): Promise<Item> {
     const res = await this.callAPI("POST", "/items", {
-      data: {
-        section_uuid: context.sectionId,
-        kit_uuid: context.kitId,
-        display_order: context.displayOrder,
-        type,
-        data,
-      },
+      data: snakeize(data),
     });
     return res.item;
   }
 
   /**
    * Create a new heading
-   * @param content The text content of the heading
-   * @param kitId The id of the kit to create the item in
-   * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param displayOrder The relative order of the item in the section
+   * @param text The text content of the heading
+   * @param data The item data including the kit and section to create the item in
    * @returns The new item
    */
-  async createHeading(data: {
-    content: string;
-    kitId: string;
-    sectionId: string;
-    displayOrder?: string | number;
-  }): Promise<Item> {
-    const { kitId, sectionId, displayOrder } = data;
-    return this._createItemWithoutAsset(
-      ItemType.Heading,
-      { kitId, sectionId, displayOrder },
-      { content: data.content }
-    );
+  async createHeading(text: string, data: ItemData): Promise<Item> {
+    const _data = merge({}, data, { type: ItemType.Heading, data: { content: text } });
+    return this._createItemWithoutAsset(_data);
   }
 
   /**
    * Create a new inline note
-   * @param content The text content of the note
-   * @param kitId The id of the kit to create the item in
-   * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param displayOrder The relative order of the item in the section
+   * @param text The text content of the note
+   * @param data The item data including the kit and section to create the item in
    * @returns The new item
    */
-  async createNote(data: {
-    content: string;
-    kitId: string;
-    sectionId: string;
-    displayOrder?: string | number;
-  }): Promise<Item> {
-    const { kitId, sectionId, displayOrder } = data;
-    return this._createItemWithoutAsset(
-      ItemType.Note,
-      { kitId, sectionId, displayOrder },
-      { content: data.content }
-    );
+  async createNote(text: string, data: ItemData): Promise<Item> {
+    const _data = merge({}, data, { type: ItemType.Note, data: { content: text } });
+    return this._createItemWithoutAsset(_data);
   }
 
   /**
    * Create a new code snippet
-   * @param content The text content of the snippet
-   * @param language The text content of the snippet
-   * @param kitId The id of the kit to create the item in
-   * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param displayOrder The relative order of the item in the section
+   * @param content The text content and language of the snippet
+   * @param data The item data including the kit and section to create the item in
    * @returns The new item
    */
-  async createCodeSnippet(data: {
-    kitId: string;
-    sectionId: string;
-    displayOrder?: string | number;
-    content: string;
-    language?: string;
-  }): Promise<Item> {
-    const { kitId, sectionId, content, language, displayOrder } = data;
-    return this._createItemWithoutAsset(
-      ItemType.CodeSnippet,
-      { kitId, sectionId, displayOrder },
-      {
-        content,
-        code_language: language,
-      }
-    );
+  async createCodeSnippet(
+    content: { text: string; language?: string },
+    data: ItemData
+  ): Promise<Item> {
+    const { text, language } = content;
+    const _data = merge({}, data, {
+      type: ItemType.CodeSnippet,
+      data: { content: text, codeLanguage: language },
+    });
+    return this._createItemWithoutAsset(_data);
   }
 
   /**
    * Create a new guide
-   * @param content The text content of the note
-   * @param title Do or Don't for the title of the guide
-   * @param file Optionally create the guide with an image.
-   * @param kitId The id of the kit to create the item in
-   * @param sectionId The id of the section to create the item in (must be in kit)
-   * @param displayOrder The relative order of the item in the section
+   * @param content The text, title and file to create with the guide
+   * @param data The item data including the kit and section to create the item in
    * @returns The new item
    */
-  async createGuide(data: {
-    kitId: string;
-    sectionId: string;
-    displayOrder?: string | number;
-    content: string;
-    title: "Do" | "Don't";
-    file?: string;
-  }): Promise<Item> {
-    const { kitId, sectionId, content, title, file, displayOrder } = data;
+  async createGuide(
+    content: {
+      text: string;
+      title: "Do" | "Don't";
+      file?: string;
+    },
+    data: ItemData
+  ): Promise<Item> {
+    const { text, title, file } = content;
     const color = { Do: "green", "Don't": "red" }[title];
     if (!color) {
       throw new LingoError(
@@ -374,39 +356,24 @@ class Lingo {
       );
     }
 
+    const _data = merge({}, data, { type: ItemType.Guide, data: { content: text, title, color } });
+
     if (!file) {
+      // Create the text based item
       return await this._createItemWithoutAsset(
-        ItemType.Guide,
-        { kitId, sectionId, displayOrder },
-        {
-          content,
-          title,
-          color,
-          display_style: "text_only",
-        }
+        merge(_data, { displayProperties: { displayStyle: "text_only" } })
       );
     }
     const { item } = await this._createFileAsset(
       file,
       {},
-      {
-        kitId,
-        sectionId,
-        displayOrder,
-        type: ItemType.Guide,
-        data: {
-          content,
-          color,
-          title,
-          display_style: "image",
-        },
-      }
+      merge(_data, { displayProperties: { displayStyle: "image" } })
     );
     return item;
   }
 
   /**
-   * Create a new supprting content item
+   * @deprecated Support content is unavailable for spaces migrated to our latest architecture. Use createBanner instead.
    * @param file a filepath for a PNG, JPG, or supported video file.
    * @param kitId The id of the kit to create the item in
    * @param sectionId The id of the section to create the item in (must be in kit)
@@ -419,23 +386,47 @@ class Lingo {
     sectionId: string;
     displayOrder?: string | number;
   }): Promise<Item> {
+    console.warn("Support content has been deprecated. Please use createBanner");
     const { kitId, sectionId, file, displayOrder } = position;
-    const itemData = { kitId, sectionId, displayOrder, type: ItemType.SupportingContent };
+    const itemData = {
+      kitUuid: kitId,
+      sectionUuid: sectionId,
+      displayOrder,
+      type: ItemType.SupportingContent,
+    };
 
     const { item } = await this._createFileAsset(file, {}, itemData);
     return item;
   }
 
   /**
+   * Create a banner image asset. Banners are displayed full-width without metadata or download options.
+   * @param file A filepath for a PNG, JPG, or supported image file
+   * @param item Item data specifying where to place the banner (kitId, sectionId)
+   * @returns The new item and asset
+   */
+  async createBanner(file: string, item: ItemData) {
+    const _item = merge({}, item, {
+      type: ItemType.Asset,
+      displayProperties: {
+        size: 1,
+        showMetadata: false,
+        allowDownload: false,
+      },
+    });
+    return this._createFileAsset(file, {}, _item);
+  }
+
+  /**
    * Create a color asset
-   * @param color A color string, See TinyColor for supported formats
-   * @param data: Additional asset metadata
-   * @param item: An optional item to add the asset to a kit
+   * @param color A color string. See TinyColor for supported formats (hex, rgb, hsl, etc.)
+   * @param data Additional asset metadata (name, notes, keywords)
+   * @param item Optional item data to add the asset to a kit
    */
   async createColorAsset(
     color: string,
-    data?: Omit<UploadData, "type">,
-    item?: AssetItem
+    data?: Omit<AssetData, "type">,
+    item?: ItemData
   ): Promise<{ asset?: Asset; item?: Item }> {
     const c = new TinyColor(color);
     const hsv = c.toHsv();
@@ -443,20 +434,12 @@ class Lingo {
       throw Error(`Invalid color: ${color}`);
     }
 
-    const _item = item
-      ? {
-          section_uuid: item.sectionId,
-          kit_uuid: item.kitId,
-          display_order: item.displayOrder,
-          type: "asset",
-        }
-      : undefined;
-
+    const _item = item ? { ...item, type: ItemType.Asset } : undefined;
     const { dateAdded, dateUpdated, ...otherData } = data ?? {};
     const assetData = {
       ...otherData,
-      date_added: formatDate(dateAdded),
-      date_updated: formatDate(dateUpdated),
+      dateAdded: formatDate(dateAdded),
+      dateUpdated: formatDate(dateUpdated),
       item: _item,
       type: AssetType.Color,
       colors: [
@@ -471,37 +454,35 @@ class Lingo {
     };
 
     const res = await this.callAPI("POST", "/assets", {
-      data: assetData,
+      data: snakeize(assetData),
     });
     return res;
   }
 
+  /**
+   * Create a link (URL) asset
+   * @param url The URL for the link asset
+   * @param data Additional asset metadata (name, notes, keywords)
+   * @param item Optional item data to add the asset to a kit
+   */
   async createLinkAsset(
     url: string,
-    data?: Omit<UploadData, "type">,
-    item?: AssetItem
+    data?: Omit<AssetData, "type">,
+    item?: ItemData
   ): Promise<{ asset?: Asset; item?: Item }> {
-    const _item = item
-      ? {
-          section_uuid: item.sectionId,
-          kit_uuid: item.kitId,
-          display_order: item.displayOrder,
-          type: "asset",
-        }
-      : undefined;
-
+    const _item = item ? { ...item, type: ItemType.Asset } : undefined;
     const { dateAdded, dateUpdated, ...otherData } = data ?? {};
     const assetData = {
       url,
       ...otherData,
-      date_added: formatDate(dateAdded),
-      date_updated: formatDate(dateUpdated),
+      dateAdded: formatDate(dateAdded),
+      dateUpdated: formatDate(dateUpdated),
       item: _item,
       type: AssetType.URL,
     };
 
     const res = await this.callAPI("POST", "/assets", {
-      data: assetData,
+      data: snakeize(assetData),
     });
     return res;
   }
@@ -510,8 +491,8 @@ class Lingo {
    * Validate asset data to ensure it is valid for uploading
    *
    * @param file a filepath
-   * @param data An oject with additional optional metadata
-   * @returns The
+   * @param data An object with additional optional metadata
+   * @returns The validated asset metadata
    */
   async validateAsset(
     file: string,
@@ -528,7 +509,7 @@ class Lingo {
   /**
    * Create a new asset from a file
    * @param file A filepath
-   * @param data An oject with additional optional metadata
+   * @param data An object with additional optional metadata
    * @param item Optional item data to add the asset to a kit
    * ```
    * data = {
@@ -547,32 +528,18 @@ class Lingo {
    */
   async createFileAsset(
     file: string,
-    data?: {
-      name?: string;
-      type?: AssetType;
-      notes?: string;
-      keywords?: string;
-      dateAdded?: Date;
-      dateUpdated?: Date;
-    },
-    item?: AssetItem
+    data?: AssetData,
+    item?: ItemData
   ): Promise<{ item?: Item; asset?: Asset }> {
-    return await this._createFileAsset(file, data, item);
+    return await this._createFileAsset(file, data, { ...item, type: ItemType.Asset });
   }
 
   private async _createFileAsset(
     file: string,
-    data?: {
-      name?: string;
-      type?: AssetType;
-      notes?: string;
-      keywords?: string;
-      dateAdded?: Date;
-      dateUpdated?: Date;
-    },
-    item?: AssetItem & { type?: ItemType; data?: ItemData }
+    data?: AssetData,
+    item?: ItemData & { type: ItemType }
   ) {
-    const upload = new Upload(file, data);
+    const upload = new Upload(file, data, this.callAPI.bind(this));
     return await upload.upload(item);
   }
 
@@ -590,7 +557,7 @@ class Lingo {
 
   /**
    *
-   * @param assetId The asset idetnfier to create a direct links for
+   * @param assetId The asset identifier to create a direct link for
    * @param name The name of the direct link
    * @returns The newly created direct link
    */
@@ -604,7 +571,7 @@ class Lingo {
   // MARK : Making Requests
   // -------------------------------------------------------------------------------
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-  requestParams(method: string, path: string, options?: any): any {
+  private requestParams(method: string, path: string, options?: any): any {
     const { qs, headers, data, formData, ...rest } = options || {};
 
     let url = this.baseURL + path;
@@ -650,6 +617,12 @@ class Lingo {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async callAPI(method: string, path: string, options = {}): Promise<any> {
+    if (!this.auth) {
+      throw new LingoError(
+        LingoError.Code.Unauthorized,
+        "Lingo API credentials not configured. Call setup(spaceId, token) or pass credentials to the constructor."
+      );
+    }
     const { url, ..._options } = this.requestParams(method, path, options);
     const response = await fetch(url, _options);
 

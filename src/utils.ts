@@ -51,9 +51,6 @@ export function getUploadData(
   }
   const fileData = fs.createReadStream(filePath);
 
-  const status = fs.statSync(filePath);
-  status.size;
-
   if (!type) {
     throw new LingoError(
       LingoError.Code.InvalidParams,
@@ -70,28 +67,54 @@ export function getUploadData(
   };
 }
 
-/**
- * Normalizes response data into a more javascript friendly format by camelcaseing snake case to camel case and replacing some keys.
- *
- * @param object Any object
- * @returns The object with normalized object keys
- */
-function normalizeResponse(object: unknown) {
-  const convertKey = (str: string): string =>
-    str
-      .replace("uuid", "id")
-      .replace(/([-_][a-z0-9])/g, group => group.toUpperCase().replace("-", "").replace("_", ""));
+type CamelToSnake<S extends string> = S extends `${infer Head}${infer Tail}`
+  ? Head extends Uppercase<Head>
+    ? `_${Lowercase<Head>}${CamelToSnake<Tail>}`
+    : `${Head}${CamelToSnake<Tail>}`
+  : S;
+
+type SnakeToCamel<S extends string> = S extends `${infer Head}_${infer Tail}`
+  ? `${Head}${Capitalize<SnakeToCamel<Tail>>}`
+  : S;
+
+type SnakeKeys<T> = T extends Array<infer U>
+  ? SnakeKeys<U>[]
+  : T extends object
+    ? { [K in keyof T as K extends string ? CamelToSnake<K> : K]: SnakeKeys<T[K]> }
+    : T;
+
+type CamelKeys<T> = T extends Array<infer U>
+  ? CamelKeys<U>[]
+  : T extends object
+    ? { [K in keyof T as K extends string ? SnakeToCamel<K> : K]: CamelKeys<T[K]> }
+    : T;
+
+function transformKeys(object: unknown, convertKey: (str: string) => string): unknown {
   if (!object) return object;
   if (Array.isArray(object)) {
-    return object.map(val => normalizeResponse(val));
+    return object.map(val => transformKeys(val, convertKey));
   }
   if (typeof object === "object") {
     return Object.keys(object).reduce((acc, key) => {
-      acc[convertKey(key)] = normalizeResponse(object[key]);
+      acc[convertKey(key)] = transformKeys((object as Record<string, unknown>)[key], convertKey);
       return acc;
-    }, {});
+    }, {} as Record<string, unknown>);
   }
   return object;
+}
+
+const toCamelCase = (str: string): string =>
+  str.replace(/([-_][a-z0-9])/g, group => group.toUpperCase().replace("-", "").replace("_", ""));
+
+const toSnakeCase = (str: string): string =>
+  str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+
+function camelize<T>(object: T): CamelKeys<T> {
+  return transformKeys(object, toCamelCase) as CamelKeys<T>;
+}
+
+export function snakeize<T>(object: T): SnakeKeys<T> {
+  return transformKeys(object, toSnakeCase) as SnakeKeys<T>;
 }
 
 export function formatDate(date?: Date): number {
@@ -102,7 +125,7 @@ export function formatDate(date?: Date): number {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function parseJSONResponse(body: Record<string, unknown>): any {
   if (body.success === true) {
-    return normalizeResponse(body.result);
+    return camelize(body.result);
   } else if (body.success === false) {
     throw LingoError.from(body.error);
   } else {

@@ -1,24 +1,38 @@
 import fs from "fs";
 import FormData from "form-data";
 import _merge from "lodash/merge";
-import lingo from ".";
 import LingoError from "./lingoError";
-import { AssetType, ItemData, ItemType } from "./types";
-import { formatDate, parseFilePath, resolveFilePath, retry } from "./utils";
+import { AssetType, ItemType } from "./types";
+import { formatDate, parseFilePath, resolveFilePath, retry, snakeize } from "./utils";
+import type { CallAPI } from "./search";
 
-export type UploadData = {
+export type AssetData = {
   name?: string;
   type?: AssetType;
   notes?: string;
   keywords?: string;
   dateAdded?: Date;
   dateUpdated?: Date;
+  data?: {
+    backgroundColor?: string;
+  };
 };
 
-export type AssetItem = {
-  kitId: string;
-  sectionId: string;
+export type ItemData = {
+  kitUuid: string;
+  sectionUuid: string;
   displayOrder?: string | number;
+  data?: { content?: string };
+  displayProperties?: {
+    size?: 1 | 2 | 3 | 4 | 5 | 6;
+    imageAlignment?: "top" | "leading" | "trailing";
+    showMetadata?: boolean;
+    allowDownload?: boolean;
+    caption?: string;
+    cardBackgroundColor?: string;
+    autoplay?: boolean;
+    displayStyle?: "image" | "text_only";
+  };
 };
 
 const MAX_UNCHUNKED_UPLOAD_SIZE = 20000000;
@@ -31,9 +45,11 @@ const MAX_UPLOAD_CHUNK_SIZE = 10000000;
 export class Upload {
   size: number;
   filePath: string;
-  assetData: UploadData;
+  assetData: AssetData;
+  private _callAPI: CallAPI;
 
-  constructor(file: string, data: UploadData) {
+  constructor(file: string, data: AssetData, callAPI: CallAPI) {
+    this._callAPI = callAPI;
     const filePath = resolveFilePath(file),
       { filename, extension } = parseFilePath(file),
       name = data?.name || filename,
@@ -81,16 +97,10 @@ export class Upload {
    * @param item Optional item data to place the asset in a  kit. If no item is provided, the asset will be uploaded to the library.
    * @returns
    */
-  async upload(item?: AssetItem & { type?: ItemType; data?: ItemData }) {
+  async upload(item?: ItemData & { type: ItemType }) {
     const json: Record<string, unknown> = { ...this.assetData };
     if (item) {
-      json.item = {
-        type: item.type ?? "asset",
-        kit_uuid: item.kitId,
-        section_uuid: item.sectionId,
-        display_order: item.displayOrder,
-        data: item.data,
-      };
+      json.item = snakeize(item);
     }
 
     if (this.size > MAX_UNCHUNKED_UPLOAD_SIZE) {
@@ -116,7 +126,7 @@ export class Upload {
 
   private async callApi(method: string, path: string, options = {}) {
     return await retry(async () => {
-      return await lingo.callAPI(method, path, options);
+      return await this._callAPI(method, path, options);
     }, 2);
   }
 

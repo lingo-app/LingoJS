@@ -25,7 +25,7 @@ describe("Library exports", () => {
   });
 });
 
-describe.only("Retry", () => {
+describe("Retry", () => {
   it("Should not retry if retries is 0", async () => {
     const action = jest.fn();
     action.mockImplementation(() => {
@@ -152,33 +152,36 @@ describe("JSON response parsing", () => {
     assert.deepEqual(res, { objectId: 1, data: { objectName: "Lingo" } });
   });
 
-  it("Should replace instances of uuid with id", () => {
+  it("Should maintain uuids", () => {
     const res = parseJSONResponse({
       success: true,
       result: { uuid: "321", data: { parent_uuid: "123" } },
     });
-    assert.deepEqual(res, { id: "321", data: { parentId: "123" } });
+    assert.deepEqual(res, { uuid: "321", data: { parentUuid: "123" } });
   });
 });
 
 describe("Requests params", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const requestParams = (lingo as any).requestParams.bind(lingo);
+
   it("Should append query string if provided", () => {
-    const { url } = lingo.requestParams("GET", "/", { qs: { key: "value" } });
+    const { url } = requestParams("GET", "/", { qs: { key: "value" } });
     assert(url.indexOf("?key=value") > 0, `Url doesn't contain query string ${url}`);
   });
 
   it("error if data and formData are provided", () => {
-    assert.throws(() => lingo.requestParams("GET", "/", { data: {}, formData: {} }));
+    assert.throws(() => requestParams("GET", "/", { data: {}, formData: {} }));
   });
 
-  it("Should strigify json data", () => {
+  it("Should stringify json data", () => {
     const data = { key: "value" };
-    const { body } = lingo.requestParams("GET", "/", { data });
+    const { body } = requestParams("GET", "/", { data });
     assert.equal(body, JSON.stringify(data));
   });
 
   it("Should include a client header", () => {
-    const { headers } = lingo.requestParams("GET", "/");
+    const { headers } = requestParams("GET", "/");
     assert.equal(headers["x-lingo-client"], "LingoJS");
   });
 });

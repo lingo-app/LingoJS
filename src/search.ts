@@ -1,13 +1,15 @@
-import lingo from ".";
 import { SearchResult } from "./types";
 import { encodeUnicode } from "./utils";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CallAPI = (method: string, path: string, options?: any) => Promise<any>;
 
 type QueryContext = "global" | "library";
 type QueryType = "content" | "jump_to" | "assets" | "tags";
 type Sort = "relevance" | "type" | "alpha" | "recent";
 
 /**
- * The search ass is used to build and execute search queries.
+ * The search class is used to build and execute search queries.
  *
  * You can build a query then call `fetch` multiple times calling either `nextPage` or updating the offset manually to fetch multiple pages of results.
  *
@@ -29,6 +31,7 @@ type Sort = "relevance" | "type" | "alpha" | "recent";
  * ```
  */
 export class Search {
+  private _callAPI: CallAPI;
   _filters = [];
   _context: QueryContext = "global";
   _queryType: QueryType = "content";
@@ -36,9 +39,13 @@ export class Search {
   _offset = 0;
   _limit = 50;
 
+  constructor(callAPI: CallAPI) {
+    this._callAPI = callAPI;
+  }
+
   /**
    * Execute the search request. This can be called multiple times on the same Search object.
-   * @returns A primise which resolves with the results
+   * @returns A promise which resolves with the results
    */
   async fetch(): Promise<SearchResult> {
     const path = "/search",
@@ -50,7 +57,7 @@ export class Search {
         limit: this._limit,
         offset: this._offset,
       });
-    return await lingo.callAPI("GET", path, { qs: { query: params } });
+    return await this._callAPI("GET", path, { qs: { query: params } });
   }
 
   // Context
@@ -242,7 +249,7 @@ export class Search {
   }
 
   /**
-   * Find results created on a specific date or within a date range. Provide either `execlty` or `before` and `after` to specify a range.
+   * Find results created on a specific date or within a date range. Provide either `exactly` or `before` and `after` to specify a range.
    * @param exactly File assets created on a specific date
    * @param before File assets created before a date
    * @param after File assets created after a date
