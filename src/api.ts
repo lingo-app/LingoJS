@@ -476,6 +476,36 @@ class Lingo {
     return res;
   }
 
+  async createLinkAsset(
+    url: string,
+    data?: Omit<UploadData, "type">,
+    item?: AssetItem
+  ): Promise<{ asset?: Asset; item?: Item }> {
+    const _item = item
+      ? {
+          section_uuid: item.sectionId,
+          kit_uuid: item.kitId,
+          display_order: item.displayOrder,
+          type: "asset",
+        }
+      : undefined;
+
+    const { dateAdded, dateUpdated, ...otherData } = data ?? {};
+    const assetData = {
+      url,
+      ...otherData,
+      date_added: formatDate(dateAdded),
+      date_updated: formatDate(dateUpdated),
+      item: _item,
+      type: AssetType.URL,
+    };
+
+    const res = await this.callAPI("POST", "/assets", {
+      data: assetData,
+    });
+    return res;
+  }
+
   /**
    * Validate asset data to ensure it is valid for uploading
    *

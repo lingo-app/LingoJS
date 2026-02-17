@@ -32,13 +32,32 @@ export enum AssetType {
   Pages = "PAGES",
   POTX = "POTX",
   PPTX = "PPTX",
+
   // Design
   AI = "AI",
   PSD = "PSD",
+  // Raster
+  HEIC = "HEIC",
+  WEBP = "WEBP",
+
   // Motion
   MOV = "MOV",
   MP4 = "MP4",
+  AVI = "AVI",
   LOTTIE = "LOTTIE",
+
+  // Audio
+  MP3 = "MP3",
+  WAV = "WAV",
+  M4A = "M4A",
+
+  // 3D
+  STL = "STL",
+  OBJ = "OBJ",
+
+  ZIP = "ZIP",
+
+  URL = "URL",
 }
 
 export type Status = "active" | "deleted";
