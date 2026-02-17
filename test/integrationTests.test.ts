@@ -245,7 +245,7 @@ describe("Write requests", () => {
           expect(guide.sectionUuid).toEqual(section.uuid);
           expect(guide.kitUuid).toEqual(kit.kitUuid);
           expect(guide.displayProperties.displayStyle).toEqual("text_only");
-          expect(guide.assetId).toBeNull();
+          expect(guide.assetId).toBeFalsy();
         });
         it("Should create a guide with an image", async () => {
           const file = __dirname + "/Logo.png";

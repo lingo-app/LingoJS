@@ -524,7 +524,8 @@ class Lingo {
     data?: AssetData,
     item?: ItemData
   ): Promise<{ item?: Item; asset?: Asset }> {
-    return await this._createFileAsset(file, data, { ...item, type: ItemType.Asset });
+    const _item = item ? { ...item, type: ItemType.Asset } : null;
+    return await this._createFileAsset(file, data, _item);
   }
 
   private async _createFileAsset(
