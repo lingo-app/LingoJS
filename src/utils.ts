@@ -77,17 +77,19 @@ type SnakeToCamel<S extends string> = S extends `${infer Head}_${infer Tail}`
   ? `${Head}${Capitalize<SnakeToCamel<Tail>>}`
   : S;
 
-type SnakeKeys<T> = T extends Array<infer U>
-  ? SnakeKeys<U>[]
-  : T extends object
-    ? { [K in keyof T as K extends string ? CamelToSnake<K> : K]: SnakeKeys<T[K]> }
-    : T;
+type SnakeKeys<T> =
+  T extends Array<infer U>
+    ? SnakeKeys<U>[]
+    : T extends object
+      ? { [K in keyof T as K extends string ? CamelToSnake<K> : K]: SnakeKeys<T[K]> }
+      : T;
 
-type CamelKeys<T> = T extends Array<infer U>
-  ? CamelKeys<U>[]
-  : T extends object
-    ? { [K in keyof T as K extends string ? SnakeToCamel<K> : K]: CamelKeys<T[K]> }
-    : T;
+type CamelKeys<T> =
+  T extends Array<infer U>
+    ? CamelKeys<U>[]
+    : T extends object
+      ? { [K in keyof T as K extends string ? SnakeToCamel<K> : K]: CamelKeys<T[K]> }
+      : T;
 
 function transformKeys(object: unknown, convertKey: (str: string) => string): unknown {
   if (!object) return object;
@@ -95,10 +97,13 @@ function transformKeys(object: unknown, convertKey: (str: string) => string): un
     return object.map(val => transformKeys(val, convertKey));
   }
   if (typeof object === "object") {
-    return Object.keys(object).reduce((acc, key) => {
-      acc[convertKey(key)] = transformKeys((object as Record<string, unknown>)[key], convertKey);
-      return acc;
-    }, {} as Record<string, unknown>);
+    return Object.keys(object).reduce(
+      (acc, key) => {
+        acc[convertKey(key)] = transformKeys((object as Record<string, unknown>)[key], convertKey);
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
   }
   return object;
 }
@@ -134,7 +139,7 @@ export function parseJSONResponse(body: Record<string, unknown>): any {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function encodeUnicode(value: any): string {
   // first we use encodeURIComponent to get percent-encoded UTF-8,
   // then we convert the percent encodings into raw bytes which

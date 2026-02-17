@@ -240,14 +240,14 @@ export type AssetFilecuts = {
       resizable: boolean;
       setDpi: boolean;
       type: string;
-    }
+    },
   ];
   presets: [
     {
       description: string;
       size: string;
       type: string;
-    }
+    },
   ];
 };
 

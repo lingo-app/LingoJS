@@ -1,5 +1,4 @@
 import fs from "fs";
-import FormData from "form-data";
 import _merge from "lodash/merge";
 import LingoError from "./lingoError";
 import { Asset, AssetType, Item, ItemType } from "./types";
@@ -102,7 +101,6 @@ export class Upload {
     if (item) {
       json.item = item;
     }
-
     if (this.size > MAX_UNCHUNKED_UPLOAD_SIZE) {
       const uploadId = await this.startUploadSession();
       await this.uploadChunks(uploadId, this.size);
@@ -112,15 +110,13 @@ export class Upload {
         data: snakeize(json),
       });
     } else {
+      const { filename } = parseFilePath(this.filePath);
+      const fileBuffer = await fs.promises.readFile(this.filePath);
       const formData = new FormData();
-      const fileData = fs.createReadStream(this.filePath);
-      formData.append("asset", fileData);
+      formData.append("asset", new Blob([fileBuffer]), filename);
       formData.append("json", JSON.stringify(snakeize(json)));
 
-      return await this.callApi("POST", "/assets", {
-        headers: formData.getHeaders(),
-        formData,
-      });
+      return await this.callApi("POST", "/assets", { formData });
     }
   }
 
@@ -150,18 +146,21 @@ export class Upload {
         chunk_number: chunkNumber,
       }),
       startByte = MAX_UPLOAD_CHUNK_SIZE * (chunkNumber - 1),
-      blob = fs.createReadStream(this.filePath, {
-        start: startByte,
-        end: startByte + MAX_UPLOAD_CHUNK_SIZE - 1,
-      }),
-      formData = new FormData();
-    formData.append("chunk", blob);
+      chunkSize = Math.min(MAX_UPLOAD_CHUNK_SIZE, this.size - startByte);
+
+    const buffer = Buffer.alloc(chunkSize);
+    const fh = await fs.promises.open(this.filePath, "r");
+    try {
+      await fh.read(buffer, 0, chunkSize, startByte);
+    } finally {
+      await fh.close();
+    }
+
+    const formData = new FormData();
+    formData.append("chunk", new Blob([buffer]));
     formData.append("json", data);
 
-    return await this.callApi("POST", "/upload_session/append", {
-      headers: formData.getHeaders(),
-      formData,
-    });
+    return await this.callApi("POST", "/upload_session/append", { formData });
   }
 
   // completes and upload session

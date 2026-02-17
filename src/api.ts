@@ -1,5 +1,4 @@
 import QueryString from "query-string";
-import fetch from "node-fetch";
 import merge from "lodash/merge";
 
 import LingoError from "./lingoError";
@@ -120,7 +119,6 @@ class Lingo {
     let page = 1,
       results = [];
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const section = await this.fetchSection(sectionId, version, page, limit);
       const items = section.items;
@@ -152,7 +150,6 @@ class Lingo {
         (item.data.content === headingId || item.uuid === headingId || item.shortId === headingId)
       );
     }
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const section = await this.fetchSection(sectionId, version, page, 200);
 
@@ -187,7 +184,6 @@ class Lingo {
     let page = 1,
       results = [];
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const items = await this.fetchItemsInGallery(galleryId, version, page, limit);
       results = [...results, ...items];
@@ -243,7 +239,7 @@ class Lingo {
         rawError: errStr,
       });
     } else {
-      return await res.buffer();
+      return Buffer.from(await res.arrayBuffer());
     }
   }
 
@@ -564,7 +560,7 @@ class Lingo {
 
   // MARK : Making Requests
   // -------------------------------------------------------------------------------
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   private requestParams(method: string, path: string, options?: any): any {
     const { qs, headers, data, formData, ...rest } = options || {};
 
@@ -591,7 +587,7 @@ class Lingo {
       body = JSON.stringify(data);
     }
 
-    const contentType = headers?.["content-type"] ?? "application/json";
+    const contentType = formData ? null : headers?.["content-type"] ?? "application/json";
     if (headers?.["content-type"]) {
       delete headers["content-type"];
     }
@@ -600,7 +596,7 @@ class Lingo {
       method,
       body,
       headers: {
-        "Content-Type": contentType,
+        ...(contentType ? { "Content-Type": contentType } : {}),
         ...headers,
         "x-lingo-client": "LingoJS",
         Authorization: this.auth,
