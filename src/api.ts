@@ -303,7 +303,7 @@ class Lingo {
    * @returns The new item
    */
   async createHeading(text: string, data: ItemData): Promise<Item> {
-    assert(!data.galleryUuid, "Headings cannot be created in galleries")
+    assert(!data.galleryUuid, "Headings cannot be created in galleries");
     const _data = merge({}, data, { type: ItemType.Heading, data: { content: text } });
     return this._createItemWithoutAsset(_data);
   }
@@ -315,7 +315,7 @@ class Lingo {
    * @returns The new item
    */
   async createNote(text: string, data: ItemData): Promise<Item> {
-    assert(!data.galleryUuid, "Notes cannot be created in galleries")
+    assert(!data.galleryUuid, "Notes cannot be created in galleries");
     const _data = merge({}, data, { type: ItemType.Note, data: { content: text } });
     return this._createItemWithoutAsset(_data);
   }
@@ -330,7 +330,7 @@ class Lingo {
     content: { text: string; language?: string },
     data: ItemData
   ): Promise<Item> {
-    assert(!data.galleryUuid, "Code snippets cannot be created in galleries")
+    assert(!data.galleryUuid, "Code snippets cannot be created in galleries");
     const { text, language } = content;
     const _data = merge({}, data, {
       type: ItemType.CodeSnippet,
@@ -339,17 +339,14 @@ class Lingo {
     return this._createItemWithoutAsset(_data);
   }
 
-    /**
+  /**
    * Create a new manual gallery item
    * @param name The name of the gallery
    * @param data The item data including the kit and section to create the item in
    * @returns The new item
    */
-  async createManualGallery(
-    name: string,
-    data: ItemData
-  ): Promise<Item> {
-    assert(!data.galleryUuid, "Galleries cannot be nested in galleries")
+  async createManualGallery(name: string, data: ItemData): Promise<Item> {
+    assert(!data.galleryUuid, "Galleries cannot be nested in galleries");
     const _data = merge({}, data, {
       type: ItemType.Gallery,
       data: { name },
@@ -357,17 +354,14 @@ class Lingo {
     return this._createItemWithoutAsset(_data);
   }
 
-    /**
+  /**
    * Create a new dynamic gallery item
    * @param viewId The id of the view
    * @param data The item data including the kit and section to create the item in
    * @returns The new item
    */
-  async createDynamicGallery(
-    viewId: number,
-    data: ItemData
-  ): Promise<Item> {
-    assert(!data.galleryUuid, "Galleries cannot be nested in galleries")
+  async createDynamicGallery(viewId: number, data: ItemData): Promise<Item> {
+    assert(!data.galleryUuid, "Galleries cannot be nested in galleries");
     const _data = merge({}, data, {
       type: ItemType.Gallery,
       viewId,
@@ -389,7 +383,7 @@ class Lingo {
     },
     data: ItemData
   ): Promise<Item> {
-    assert(!data.galleryUuid, "Guides cannot be created in galleries")
+    assert(!data.galleryUuid, "Guides cannot be created in galleries");
     const { text, title, file } = content;
     const color = { Do: "green", "Don't": "red" }[title];
     if (!color) {
@@ -569,7 +563,10 @@ class Lingo {
     data?: AssetData,
     item?: ItemData & { type: ItemType }
   ): Promise<{ item?: Item; asset?: Asset }> {
-    assert(!item?.galleryUuid || item.type === ItemType.Asset, `${item.type} items cannot be created in galleries`)
+    assert(
+      !item?.galleryUuid || item.type === ItemType.Asset,
+      `${item.type} items cannot be created in galleries`
+    );
     const upload = new Upload(file, data, this.callAPI.bind(this));
     return await upload.upload(item);
   }
