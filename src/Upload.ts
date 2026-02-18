@@ -2,7 +2,7 @@ import fs from "fs";
 import _merge from "lodash/merge";
 import LingoError from "./lingoError";
 import { Asset, AssetType, Item, ItemType } from "./types";
-import { formatDate, parseFilePath, resolveFilePath, retry, snakeize } from "./utils";
+import { formatDate, parseFilePath, resolveFilePath, retry, snakeify } from "./utils";
 import type { CallAPI } from "./search";
 
 export type AssetData = {
@@ -19,7 +19,10 @@ export type AssetData = {
 
 export type ItemData = {
   kitUuid: string;
-  sectionUuid: string;
+  /** Either sectionUuid OR galleryUuid is required */
+  sectionUuid?: string;
+  /** Either sectionUuid OR galleryUuid is required */
+  galleryUuid?: string;
   displayOrder?: string | number;
   data?: { content?: string };
   displayProperties?: {
@@ -107,14 +110,14 @@ export class Upload {
       await this.completeUploadSession(uploadId, this.size);
       json.uploadId = uploadId;
       return await this.callApi("POST", "/assets", {
-        data: snakeize(json),
+        data: snakeify(json),
       });
     } else {
       const { filename } = parseFilePath(this.filePath);
       const fileBuffer = await fs.promises.readFile(this.filePath);
       const formData = new FormData();
       formData.append("asset", new Blob([fileBuffer]), filename);
-      formData.append("json", JSON.stringify(snakeize(json)));
+      formData.append("json", JSON.stringify(snakeify(json)));
 
       return await this.callApi("POST", "/assets", { formData });
     }

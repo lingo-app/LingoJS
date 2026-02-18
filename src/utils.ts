@@ -118,7 +118,7 @@ function camelize<T>(object: T): CamelKeys<T> {
   return transformKeys(object, toCamelCase) as CamelKeys<T>;
 }
 
-export function snakeize<T>(object: T): SnakeKeys<T> {
+export function snakeify<T>(object: T): SnakeKeys<T> {
   return transformKeys(object, toSnakeCase) as SnakeKeys<T>;
 }
 

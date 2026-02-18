@@ -14,10 +14,11 @@ import {
   DirectLink,
   CustomField,
 } from "./types";
-import { formatDate, getUploadData, parseJSONResponse, snakeize } from "./utils";
+import { formatDate, getUploadData, parseJSONResponse, snakeify } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
 import { ItemData, Upload, AssetData } from "./Upload";
+import { assert } from "console";
 
 type KitIncludes = "use_versions" | "versions" | null;
 
@@ -290,7 +291,7 @@ class Lingo {
 
   private async _createItemWithoutAsset(data: ItemData & { type: ItemType }): Promise<Item> {
     const res = await this.callAPI("POST", "/items", {
-      data: snakeize(data),
+      data: snakeify(data),
     });
     return res.item;
   }
@@ -302,6 +303,7 @@ class Lingo {
    * @returns The new item
    */
   async createHeading(text: string, data: ItemData): Promise<Item> {
+    assert(!data.galleryUuid, "Headings cannot be created in galleries")
     const _data = merge({}, data, { type: ItemType.Heading, data: { content: text } });
     return this._createItemWithoutAsset(_data);
   }
@@ -313,6 +315,7 @@ class Lingo {
    * @returns The new item
    */
   async createNote(text: string, data: ItemData): Promise<Item> {
+    assert(!data.galleryUuid, "Notes cannot be created in galleries")
     const _data = merge({}, data, { type: ItemType.Note, data: { content: text } });
     return this._createItemWithoutAsset(_data);
   }
@@ -327,10 +330,47 @@ class Lingo {
     content: { text: string; language?: string },
     data: ItemData
   ): Promise<Item> {
+    assert(!data.galleryUuid, "Code snippets cannot be created in galleries")
     const { text, language } = content;
     const _data = merge({}, data, {
       type: ItemType.CodeSnippet,
       data: { content: text, codeLanguage: language },
+    });
+    return this._createItemWithoutAsset(_data);
+  }
+
+    /**
+   * Create a new manual gallery item
+   * @param name The name of the gallery
+   * @param data The item data including the kit and section to create the item in
+   * @returns The new item
+   */
+  async createManualGallery(
+    name: string,
+    data: ItemData
+  ): Promise<Item> {
+    assert(!data.galleryUuid, "Galleries cannot be nested in galleries")
+    const _data = merge({}, data, {
+      type: ItemType.Gallery,
+      data: { name },
+    });
+    return this._createItemWithoutAsset(_data);
+  }
+
+    /**
+   * Create a new dynamic gallery item
+   * @param viewId The id of the view
+   * @param data The item data including the kit and section to create the item in
+   * @returns The new item
+   */
+  async createDynamicGallery(
+    viewId: number,
+    data: ItemData
+  ): Promise<Item> {
+    assert(!data.galleryUuid, "Galleries cannot be nested in galleries")
+    const _data = merge({}, data, {
+      type: ItemType.Gallery,
+      viewId,
     });
     return this._createItemWithoutAsset(_data);
   }
@@ -349,6 +389,7 @@ class Lingo {
     },
     data: ItemData
   ): Promise<Item> {
+    assert(!data.galleryUuid, "Guides cannot be created in galleries")
     const { text, title, file } = content;
     const color = { Do: "green", "Don't": "red" }[title];
     if (!color) {
@@ -381,7 +422,6 @@ class Lingo {
    * @returns The new item
    */
   async createSupportingContent(file: string, item: ItemData): Promise<Item> {
-    console.warn("Support content has been deprecated. Please use createBanner");
     const _item = merge({}, item, { type: ItemType.SupportingContent });
     const { item: newItem } = await this._createFileAsset(file, {}, _item);
     return newItem;
@@ -443,7 +483,7 @@ class Lingo {
     };
 
     const res = await this.callAPI("POST", "/assets", {
-      data: snakeize(assetData),
+      data: snakeify(assetData),
     });
     return res;
   }
@@ -471,7 +511,7 @@ class Lingo {
     };
 
     const res = await this.callAPI("POST", "/assets", {
-      data: snakeize(assetData),
+      data: snakeify(assetData),
     });
     return res;
   }
@@ -529,6 +569,7 @@ class Lingo {
     data?: AssetData,
     item?: ItemData & { type: ItemType }
   ): Promise<{ item?: Item; asset?: Asset }> {
+    assert(!item?.galleryUuid || item.type === ItemType.Asset, `${item.type} items cannot be created in galleries`)
     const upload = new Upload(file, data, this.callAPI.bind(this));
     return await upload.upload(item);
   }
