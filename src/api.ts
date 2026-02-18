@@ -562,7 +562,7 @@ class Lingo {
   private async _createFileAsset(
     file: string,
     data?: AssetData,
-    item?: ItemData & { type: ItemType, itemUuid?: string, }
+    item?: ItemData & { type: ItemType; itemUuid?: string }
   ): Promise<{ item?: Item; asset?: Asset }> {
     assert(
       !item?.galleryUuid || item.type === ItemType.Asset,

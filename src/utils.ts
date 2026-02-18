@@ -19,14 +19,17 @@ export function parseIdentifier(identifier: string): string {
   return identifier.split("-").pop();
 }
 
-export function prepareItemData(itemData: ItemData, type: ItemType): ItemData & {type: ItemType, itemUuid: string} {
+export function prepareItemData(
+  itemData: ItemData,
+  type: ItemType
+): ItemData & { type: ItemType; itemUuid: string } {
   if (!itemData) return undefined;
-  const {galleryUuid, ...rest} = itemData
+  const { galleryUuid, ...rest } = itemData;
   return {
     type,
     itemUuid: galleryUuid,
     ...rest,
-  }
+  };
 }
 
 export function parseFilePath(filePath: string): { filename: string; extension: string } {
