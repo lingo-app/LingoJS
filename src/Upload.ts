@@ -1,24 +1,40 @@
 import fs from "fs";
-import FormData from "form-data";
 import _merge from "lodash/merge";
-import lingo from ".";
 import LingoError from "./lingoError";
-import { AssetType, ItemData, ItemType } from "./types";
-import { formatDate, parseFilePath, resolveFilePath, retry } from "./utils";
+import { Asset, AssetType, Item, ItemType } from "./types";
+import { formatDate, parseFilePath, resolveFilePath, retry, snakeify } from "./utils";
+import type { CallAPI } from "./search";
 
-export type UploadData = {
+export type AssetData = {
   name?: string;
   type?: AssetType;
   notes?: string;
   keywords?: string;
   dateAdded?: Date;
   dateUpdated?: Date;
+  data?: {
+    backgroundColor?: string;
+  };
 };
 
-export type AssetItem = {
-  kitId: string;
-  sectionId: string;
+export type ItemData = {
+  kitUuid: string;
+  /** Either sectionUuid OR galleryUuid is required */
+  sectionUuid?: string;
+  /** Either sectionUuid OR galleryUuid is required */
+  galleryUuid?: string;
   displayOrder?: string | number;
+  data?: { content?: string };
+  displayProperties?: {
+    size?: 1 | 2 | 3 | 4 | 5 | 6;
+    imageAlignment?: "top" | "leading" | "trailing";
+    showMetadata?: boolean;
+    allowDownload?: boolean;
+    caption?: string;
+    cardBackgroundColor?: string;
+    autoplay?: boolean;
+    displayStyle?: "image" | "text_only";
+  };
 };
 
 const MAX_UNCHUNKED_UPLOAD_SIZE = 20000000;
@@ -31,9 +47,11 @@ const MAX_UPLOAD_CHUNK_SIZE = 10000000;
 export class Upload {
   size: number;
   filePath: string;
-  assetData: UploadData;
+  assetData: AssetData;
+  private _callAPI: CallAPI;
 
-  constructor(file: string, data: UploadData) {
+  constructor(file: string, data: AssetData, callAPI: CallAPI) {
+    this._callAPI = callAPI;
     const filePath = resolveFilePath(file),
       { filename, extension } = parseFilePath(file),
       name = data?.name || filename,
@@ -81,42 +99,33 @@ export class Upload {
    * @param item Optional item data to place the asset in a  kit. If no item is provided, the asset will be uploaded to the library.
    * @returns
    */
-  async upload(item?: AssetItem & { type?: ItemType; data?: ItemData }) {
+  async upload(item?: ItemData & { type: ItemType }): Promise<{ item?: Item; asset?: Asset }> {
     const json: Record<string, unknown> = { ...this.assetData };
     if (item) {
-      json.item = {
-        type: item.type ?? "asset",
-        kit_uuid: item.kitId,
-        section_uuid: item.sectionId,
-        display_order: item.displayOrder,
-        data: item.data,
-      };
+      json.item = item;
     }
-
     if (this.size > MAX_UNCHUNKED_UPLOAD_SIZE) {
       const uploadId = await this.startUploadSession();
       await this.uploadChunks(uploadId, this.size);
       await this.completeUploadSession(uploadId, this.size);
-      json.upload_id = uploadId;
+      json.uploadId = uploadId;
       return await this.callApi("POST", "/assets", {
-        data: json,
+        data: snakeify(json),
       });
     } else {
+      const { filename } = parseFilePath(this.filePath);
+      const fileBuffer = await fs.promises.readFile(this.filePath);
       const formData = new FormData();
-      const fileData = fs.createReadStream(this.filePath);
-      formData.append("asset", fileData);
-      formData.append("json", JSON.stringify(json));
+      formData.append("asset", new Blob([fileBuffer]), filename);
+      formData.append("json", JSON.stringify(snakeify(json)));
 
-      return await this.callApi("POST", "/assets", {
-        headers: formData.getHeaders(),
-        formData,
-      });
+      return await this.callApi("POST", "/assets", { formData });
     }
   }
 
   private async callApi(method: string, path: string, options = {}) {
     return await retry(async () => {
-      return await lingo.callAPI(method, path, options);
+      return await this._callAPI(method, path, options);
     }, 2);
   }
 
@@ -140,18 +149,21 @@ export class Upload {
         chunk_number: chunkNumber,
       }),
       startByte = MAX_UPLOAD_CHUNK_SIZE * (chunkNumber - 1),
-      blob = fs.createReadStream(this.filePath, {
-        start: startByte,
-        end: startByte + MAX_UPLOAD_CHUNK_SIZE - 1,
-      }),
-      formData = new FormData();
-    formData.append("chunk", blob);
+      chunkSize = Math.min(MAX_UPLOAD_CHUNK_SIZE, this.size - startByte);
+
+    const buffer = Buffer.alloc(chunkSize);
+    const fh = await fs.promises.open(this.filePath, "r");
+    try {
+      await fh.read(buffer, 0, chunkSize, startByte);
+    } finally {
+      await fh.close();
+    }
+
+    const formData = new FormData();
+    formData.append("chunk", new Blob([buffer]));
     formData.append("json", data);
 
-    return await this.callApi("POST", "/upload_session/append", {
-      headers: formData.getHeaders(),
-      formData,
-    });
+    return await this.callApi("POST", "/upload_session/append", { formData });
   }
 
   // completes and upload session

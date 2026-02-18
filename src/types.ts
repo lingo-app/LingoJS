@@ -1,11 +1,3 @@
-export type ItemData = {
-  content?: string;
-  title?: string;
-  code_language?: string;
-  display_style?: string;
-  color?: string;
-};
-
 export enum AssetType {
   PNG = "PNG",
   JPG = "JPG",
@@ -32,13 +24,32 @@ export enum AssetType {
   Pages = "PAGES",
   POTX = "POTX",
   PPTX = "PPTX",
+
   // Design
   AI = "AI",
   PSD = "PSD",
+  // Raster
+  HEIC = "HEIC",
+  WEBP = "WEBP",
+
   // Motion
   MOV = "MOV",
   MP4 = "MP4",
+  AVI = "AVI",
   LOTTIE = "LOTTIE",
+
+  // Audio
+  MP3 = "MP3",
+  WAV = "WAV",
+  M4A = "M4A",
+
+  // 3D
+  STL = "STL",
+  OBJ = "OBJ",
+
+  ZIP = "ZIP",
+
+  URL = "URL",
 }
 
 export type Status = "active" | "deleted";
@@ -48,15 +59,17 @@ export enum ItemType {
   Asset = "asset",
   Heading = "heading",
   Note = "inline_note",
-  SupportingContent = "supporting_image",
   CodeSnippet = "code_snippet",
   Guide = "guide",
+  Gallery = "gallery",
+  /** Support content is deprecated, use asset type with displayProperties instead */
+  SupportingContent = "supporting_image",
 }
 
 export interface Kit {
   name: string;
   description: string;
-  kitId: string;
+  kitUuid: string;
   spaceId: number;
   shortId: string;
   useVersion: number;
@@ -69,7 +82,7 @@ export interface Kit {
 }
 
 export interface KitVersion {
-  kitId: string;
+  kitUuid: string;
   status: Status;
   version: number;
   versionIdentifer: string;
@@ -84,11 +97,11 @@ export interface KitVersion {
 }
 
 export interface KitOutline extends KitVersion {
-  sections: [KitOutlineSection];
+  sections: KitOutlineSection[];
 }
 
 export interface KitOutlineHeading {
-  id: string;
+  uuid: string;
   shortId: string;
   displayOrder: number;
   name: string;
@@ -96,7 +109,7 @@ export interface KitOutlineHeading {
 }
 
 export interface KitOutlineSection {
-  id: string;
+  uuid: string;
   shortId: string;
   name: string;
   version: number;
@@ -105,14 +118,14 @@ export interface KitOutlineSection {
     items: number;
   };
   displayOrder: number;
-  headers: [KitOutlineHeading];
+  headers: KitOutlineHeading[];
 }
 
 export interface Section {
-  id: string;
+  uuid: string;
   shortId: string;
   name: string;
-  kitId: string;
+  kitUuid: string;
   version: number;
   status: Status;
   displayOrder: number;
@@ -123,11 +136,13 @@ export interface Section {
   items: Item[];
 }
 
+// MARK : Item
+// -------------------------------------------------------------------------------
 export interface Item {
-  id: string;
+  uuid: string;
   shortId: string;
-  kitId: string;
-  sectionId: string;
+  kitUuid: string;
+  sectionUuid: string;
   displayOrder: number;
   version: number;
   status: Status | "trashed";
@@ -138,13 +153,76 @@ export interface Item {
   asset?: Asset;
   data: {
     content?: string;
-    background?: string;
     codeLanguage?: string;
-    displayStyle?: string;
     title?: string;
     color?: string;
+
+    // Galleries
+    dateRefreshed?: string;
+    viewName?: string;
+    name?: string;
+    viewId?: number;
+    assets?: number;
+    itemProcessing?: "pending" | "complete";
+
+    /** Deprecated */
+    background?: string;
+    /** Deprecated */
+    displayStyle?: string;
+  };
+  displayProperties: {
+    size?: 1 | 2 | 3 | 4 | 5 | 6;
+    imageAlignment?: "top" | "leading" | "trailing";
+    showMetadata?: boolean;
+    allowDownload?: boolean;
+    caption?: string;
+    cardBackgroundColor?: string;
+    autoplay?: boolean;
+    displayStyle?: "image" | "text_only";
   };
 }
+
+// MARK : Custom Fields
+// -------------------------------------------------------------------------------
+export enum CustomFieldTypes {
+  "text" = "text",
+  "number" = "number",
+  "date" = "date",
+  "checklist" = "checklist",
+  "select" = "select",
+}
+
+export enum CustomFieldOperation {
+  "add" = "add",
+  "remove" = "remove",
+  "set" = "set",
+}
+
+export type CustomFieldOption = {
+  id?: number; // Options created on the client do not yet have an ID value
+  name: string;
+  status: "active" | "deleted";
+  selected?: boolean;
+};
+
+export type CustomField = {
+  id: number;
+  type: CustomFieldTypes;
+  spaceId: number;
+  name: string;
+  status: "active" | "deleted";
+  public: boolean;
+  displayOrder: number;
+  options?: CustomFieldOption[];
+  value?: string | number;
+};
+
+export type AssetCustomFields = {
+  [key: string]: string[] | string | number;
+};
+
+// MARK : Asset
+// -------------------------------------------------------------------------------
 
 export interface Color {
   alpha: number; // 0 - 100
@@ -162,20 +240,20 @@ export type AssetFilecuts = {
       resizable: boolean;
       setDpi: boolean;
       type: string;
-    }
+    },
   ];
   presets: [
     {
       description: string;
       size: string;
       type: string;
-    }
+    },
   ];
 };
 
 export type AssetMeta = {
-  assetProcessing?: "complete" | "processing" | "error";
   filecuts?: AssetFilecuts;
+  backgroundColor?: string;
   font: {
     displayName: string;
     extension: string;
@@ -185,11 +263,33 @@ export type AssetMeta = {
     stylesheetUrl: string;
     variant: string;
   };
+  assetProcessingDetails?: {
+    code: number;
+    message: string;
+  };
+  assetProcessing: "processing" | "complete" | "error";
+  content?: {
+    url?: string;
+    description?: string;
+    title?: string;
+    siteName?: string;
+    favicon?: string;
+    fld?: string;
+  };
+  preview?: {
+    dimensions: string;
+    fileType: string;
+    id: string;
+  };
+  duration?: number;
+  figma?: {
+    url: string;
+  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } & Record<string, any>;
 
 export interface Asset {
-  id: string;
+  uuid: string;
   type: AssetType;
   name: string;
   notes: string;
@@ -210,6 +310,8 @@ export interface Asset {
     480: string;
     1232: string;
   };
+  fields: AssetCustomFields;
+  versionedFields?: CustomField[];
 }
 
 export type DirectLink = {

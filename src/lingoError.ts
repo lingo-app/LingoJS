@@ -50,7 +50,6 @@ export default class LingoError extends Error {
     this.recovery = recovery;
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   static from(json: any): LingoError {
     const { code, message, details, recovery } = json;
     return new LingoError(code, message, details, recovery);
