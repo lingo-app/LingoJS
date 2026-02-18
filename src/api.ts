@@ -14,7 +14,7 @@ import {
   DirectLink,
   CustomField,
 } from "./types";
-import { formatDate, getUploadData, parseJSONResponse, snakeify } from "./utils";
+import { formatDate, getUploadData, parseJSONResponse, prepareItemData, snakeify } from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
 import { ItemData, Upload, AssetData } from "./Upload";
@@ -428,6 +428,7 @@ class Lingo {
    * @returns The new item and asset
    */
   async createBanner(file: string, item: ItemData): Promise<Item> {
+    assert(!item.galleryUuid, "Banners cannot be created in galleries");
     const _item = merge({}, item, {
       type: ItemType.Asset,
       displayProperties: {
@@ -457,7 +458,7 @@ class Lingo {
       throw Error(`Invalid color: ${color}`);
     }
 
-    const _item = item ? { ...item, type: ItemType.Asset } : undefined;
+    const _item = prepareItemData(item, ItemType.Asset);
     const { dateAdded, dateUpdated, ...otherData } = data ?? {};
     const assetData = {
       ...otherData,
@@ -493,7 +494,7 @@ class Lingo {
     data?: Omit<AssetData, "type">,
     item?: ItemData
   ): Promise<{ asset?: Asset; item?: Item }> {
-    const _item = item ? { ...item, type: ItemType.Asset } : undefined;
+    const _item = prepareItemData(item, ItemType.Asset);
     const { dateAdded, dateUpdated, ...otherData } = data ?? {};
     const assetData = {
       url,
@@ -554,14 +555,14 @@ class Lingo {
     data?: AssetData,
     item?: ItemData
   ): Promise<{ item?: Item; asset?: Asset }> {
-    const _item = item ? { ...item, type: ItemType.Asset } : null;
+    const _item = prepareItemData(item, ItemType.Asset);
     return await this._createFileAsset(file, data, _item);
   }
 
   private async _createFileAsset(
     file: string,
     data?: AssetData,
-    item?: ItemData & { type: ItemType }
+    item?: ItemData & { type: ItemType, itemUuid?: string, }
   ): Promise<{ item?: Item; asset?: Asset }> {
     assert(
       !item?.galleryUuid || item.type === ItemType.Asset,

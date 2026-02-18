@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import LingoError from "./lingoError";
 import btoa from "btoa";
+import { ItemData } from "./Upload";
+import { ItemType } from "./types";
 
 function isUUID(str: string) {
   const uuidPattern = "^(X{8}-X{4}-4X{3}-[89abAB]X{3}-X{12})".replace(/X/g, "[0-9A-F]");
@@ -15,6 +17,16 @@ export function parseIdentifier(identifier: string): string {
   if (isUUID(identifier)) return identifier;
   // Parse named short id
   return identifier.split("-").pop();
+}
+
+export function prepareItemData(itemData: ItemData, type: ItemType): ItemData & {type: ItemType, itemUuid: string} {
+  if (!itemData) return undefined;
+  const {galleryUuid, ...rest} = itemData
+  return {
+    type,
+    itemUuid: galleryUuid,
+    ...rest,
+  }
 }
 
 export function parseFilePath(filePath: string): { filename: string; extension: string } {
