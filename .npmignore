@@ -1,8 +1,21 @@
+# Dev tooling
 .github/
 .vscode/
+.yarn/
+.yarnrc.yml
+.gitignore
+.prettierrc
+eslint.config.mjs
+
+# Source & tests (dist/ is what gets published)
 src/
 test/
+
+# Config files
 tsconfig.json
 tsconfig.build.json
-.prettierrc
-.eslintrc.json
+yarn.lock
+
+# Misc
+.DS_Store
+CHANGELOG.md
