@@ -28,4 +28,4 @@ jobs:
       - name: Build
         run: yarn build
       - name: Deploy NPM
-        run: npm publish --access public
+        run: npm publish --provenance --access public
