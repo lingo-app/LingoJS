@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: "22.22.0"
           cache: yarn
+          registry-url: 'https://registry.npmjs.org'
       - name: Install
         run: yarn
       - name: Validate
