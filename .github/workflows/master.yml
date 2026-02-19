@@ -1,3 +1,5 @@
+name: Master
+
 on:
   push:
     branches:
@@ -7,7 +9,6 @@ permissions:
   id-token: write  # Required for OIDC
   contents: read
 
-name: Master
 jobs:
   test:
     name: Test & Deploy
@@ -17,7 +18,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: "22.22.0"
+          node-version: "24"
           cache: yarn
           registry-url: 'https://registry.npmjs.org'
       - name: Install
