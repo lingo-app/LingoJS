@@ -2,19 +2,25 @@ on:
   push:
     branches:
       - "master"
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 name: Master
 jobs:
   test:
     name: Test & Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "22.16.0"
+          node-version: "22.22.0"
           cache: yarn
           scope: "@lingo-app"
+          registry-url: "https://registry.npmjs.org/"
       - name: Install
         run: yarn
       - name: Validate
@@ -25,13 +31,4 @@ jobs:
         run: yarn build
       - name: Deploy NPM
         run: |
-          yarn npm publish --tolerate-republish
-        env:
-          NPM_REGISTRY: https://registry.npmjs.org/
-          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH }}
-      - name: Deploy GITHUB
-        run: |
-          yarn npm publish --tolerate-republish
-        env:
-          NPM_REGISTRY: https://npm.pkg.github.com
-          NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm publish --provenance --access public --tolerate-republish
