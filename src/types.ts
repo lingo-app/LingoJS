@@ -149,7 +149,7 @@ export interface Item {
   type: ItemType;
   dateAdded: string;
   dateUpdated: string;
-  assetId?: string;
+  assetUuid?: string;
   asset?: Asset;
   data: {
     content?: string;
@@ -316,7 +316,7 @@ export interface Asset {
 
 export type DirectLink = {
   id: number;
-  assetId: string;
+  assetUuid: string;
   spaceId: number;
   name: string;
   url: string;

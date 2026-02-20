@@ -245,7 +245,7 @@ describe("Write requests", () => {
           expect(guide.sectionUuid).toEqual(section.uuid);
           expect(guide.kitUuid).toEqual(kit.kitUuid);
           expect(guide.displayProperties.displayStyle).toEqual("text_only");
-          expect(guide.assetId).toBeFalsy();
+          expect(guide.assetUuid).toBeFalsy();
         });
         it("Should create a guide with an image", async () => {
           const file = __dirname + "/Logo.png";
@@ -260,7 +260,7 @@ describe("Write requests", () => {
           expect(guide.sectionUuid).toEqual(section.uuid);
           expect(guide.kitUuid).toEqual(kit.kitUuid);
           expect(guide.displayProperties.displayStyle).toEqual("image");
-          expect(guide.assetId).not.toBeNull();
+          expect(guide.assetUuid).not.toBeNull();
           expect(guide.asset.type).toEqual(AssetType.PNG);
         }, 10000);
       });
@@ -275,7 +275,7 @@ describe("Write requests", () => {
         expect(item.type).toEqual(ItemType.Asset);
         expect(item.sectionUuid).toEqual(section.uuid);
         expect(item.kitUuid).toEqual(kit.kitUuid);
-        expect(item.assetId).not.toBeNull();
+        expect(item.assetUuid).not.toBeNull();
         expect(item.asset.type).toEqual(AssetType.PNG);
         expect(item.displayProperties);
       });

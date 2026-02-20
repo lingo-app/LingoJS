@@ -1,3 +1,6 @@
+# 3.1
+* Add `createAssetItem` to place existing assets into kits
+
 # 3.0
 This is a major update with breaking changes to better support the latest features in Lingo.
 
