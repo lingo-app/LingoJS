@@ -442,6 +442,20 @@ class Lingo {
   }
 
   /**
+   * Place an asset into a kit by creating a new item.
+   * @param assetId The asset ID for the item
+   * @param item Item data specifying where to place the banner (kitId, sectionId)
+   * @returns
+   */
+  async createAssetItem(assetId: string, item: ItemData): Promise<Item> {
+    const _item = merge({}, item, { type: ItemType.Asset, assetUuid: assetId });
+    const res = await this.callAPI("POST", "/items", {
+      data: snakeify(_item),
+    });
+    return res.item;
+  }
+
+  /**
    * Create a color asset
    * @param color A color string. See TinyColor for supported formats (hex, rgb, hsl, etc.)
    * @param data Additional asset metadata (name, notes, keywords)
