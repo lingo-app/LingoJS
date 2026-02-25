@@ -351,3 +351,15 @@ export interface ChangelogEvent<T> {
 }
 
 export type Changelog<T> = [ChangelogEvent<T>, ...ChangelogEvent<ChangeData<T>>[]];
+
+export type ContentType = {
+  assetType: string;
+  fileExtension: string;
+  maxSize: number;
+  category: string;
+  aliases: string[];
+  displayName: string;
+  replacements: string[] | null;
+  eligibleForDirectLinks: boolean;
+  eligibleForCustomPreviews: boolean;
+};
