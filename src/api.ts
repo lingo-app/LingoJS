@@ -4,6 +4,7 @@ import merge from "lodash/merge";
 import LingoError from "./lingoError";
 import {
   AssetType,
+  ContentType,
   ItemType,
   Kit,
   Section,
@@ -14,7 +15,15 @@ import {
   DirectLink,
   CustomField,
 } from "./types";
-import { formatDate, getUploadData, parseJSONResponse, prepareItemData, snakeify } from "./utils";
+import {
+  formatDate,
+  getUploadData,
+  parseFilePath,
+  parseJSONResponse,
+  parseRemoteFileUrl,
+  prepareItemData,
+  snakeify,
+} from "./utils";
 import { Search } from "./search";
 import { TinyColor } from "@ctrl/tinycolor";
 import { ItemData, Upload, AssetData } from "./Upload";
@@ -26,6 +35,10 @@ class Lingo {
   baseURL = "https://api.lingoapp.com/1";
   private spaceId: number | string;
   private auth: string;
+  private _contentTypesCache: {
+    types: ContentType[];
+    aliasMap: Map<string, AssetType>;
+  } | null = null;
 
   /**
    * Create a new Lingo API client
@@ -60,6 +73,36 @@ class Lingo {
   async fetchCustomFields(): Promise<CustomField[]> {
     const res = await this.callAPI("GET", "/fields");
     return res.fields;
+  }
+
+  /**
+   * Fetch supported content types from the API.
+   * Results are cached on the Lingo instance for the lifetime of the process.
+   * @returns A list of supported content type objects including aliases
+   */
+  async fetchContentTypes(): Promise<ContentType[]> {
+    if (!this._contentTypesCache) {
+      const res = await this.callAPI("GET", "/meta/content_types");
+      const types = Object.values(res.contentTypes) as ContentType[];
+      const aliasMap = new Map<string, AssetType>();
+      for (const ct of types) {
+        for (const alias of ct.aliases ?? []) {
+          aliasMap.set(alias.toUpperCase(), ct.assetType as AssetType);
+        }
+      }
+      this._contentTypesCache = { types, aliasMap };
+    }
+    return this._contentTypesCache.types;
+  }
+
+  private async resolveAliasedType(ext: string): Promise<AssetType | undefined> {
+    if (!ext) return undefined;
+    const upper = ext.toUpperCase();
+    if (Object.values(AssetType).includes(upper as AssetType)) {
+      return upper as AssetType;
+    }
+    await this.fetchContentTypes();
+    return this._contentTypesCache?.aliasMap.get(upper);
   }
 
   /**
@@ -526,6 +569,49 @@ class Lingo {
   }
 
   /**
+   * Create an asset from a remote file URL
+   * @param url The URL of the remote file to create an asset from
+   * @param data Additional asset metadata (name, type, notes, keywords)
+   * @param item Optional item data to add the asset to a kit
+   */
+  async createAssetFromRemoteFile(
+    url: string,
+    data?: AssetData,
+    item?: ItemData
+  ): Promise<{ asset?: Asset; item?: Item }> {
+    const _item = prepareItemData(item, ItemType.Asset);
+    const {
+      dateAdded,
+      dateUpdated,
+      type: explicitType,
+      name: explicitName,
+      ...otherData
+    } = data ?? {};
+    const { type: parsedType, name: parsedName, rawExtension } = parseRemoteFileUrl(url);
+    const type = explicitType ?? parsedType ?? (await this.resolveAliasedType(rawExtension));
+    if (!type) {
+      throw new LingoError(
+        LingoError.Code.InvalidParams,
+        "Unable to determine asset type from URL. Provide type in the data object or use a URL with a recognizable file extension or format query parameter."
+      );
+    }
+    const assetData = {
+      ...otherData,
+      sourceUrl: url,
+      type,
+      name: explicitName ?? parsedName,
+      dateAdded: formatDate(dateAdded),
+      dateUpdated: formatDate(dateUpdated),
+      item: _item,
+    };
+
+    const res = await this.callAPI("POST", "/assets", {
+      data: snakeify(assetData),
+    });
+    return res;
+  }
+
+  /**
    * Validate asset data to ensure it is valid for uploading
    *
    * @param file a filepath
@@ -542,6 +628,28 @@ class Lingo {
     } catch {
       throw new LingoError(LingoError.Code.FileNotValid, `Unable to access asset file: ${file}`);
     }
+  }
+
+  /**
+   * Validate a remote file URL to ensure the type can be determined before uploading
+   *
+   * @param url A remote file URL
+   * @param data An optional object with additional metadata (e.g. an explicit type override)
+   * @returns The resolved asset type and name parsed from the URL
+   */
+  async validateRemoteFileUrl(
+    url: string,
+    data?: { type?: AssetType }
+  ): Promise<{ type: AssetType; name?: string }> {
+    const { type: parsedType, name, rawExtension } = parseRemoteFileUrl(url);
+    const type = data?.type ?? parsedType ?? (await this.resolveAliasedType(rawExtension));
+    if (!type) {
+      throw new LingoError(
+        LingoError.Code.InvalidParams,
+        "Unable to determine asset type from URL. Provide type in the data object or use a URL with a recognizable file extension or format query parameter."
+      );
+    }
+    return { type, name };
   }
 
   /**
@@ -582,6 +690,14 @@ class Lingo {
       !item?.galleryUuid || item.type === ItemType.Asset,
       `${item.type} items cannot be created in galleries`
     );
+    // If no explicit type was provided, try to resolve the extension including aliases
+    if (!data?.type) {
+      const { extension } = parseFilePath(file);
+      const resolvedType = await this.resolveAliasedType(extension);
+      if (resolvedType) {
+        data = { ...data, type: resolvedType };
+      }
+    }
     const upload = new Upload(file, data, this.callAPI.bind(this));
     return await upload.upload(item);
   }

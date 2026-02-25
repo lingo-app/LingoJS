@@ -3,7 +3,7 @@ import path from "path";
 import LingoError from "./lingoError";
 import btoa from "btoa";
 import { ItemData } from "./Upload";
-import { ItemType } from "./types";
+import { AssetType, ItemType } from "./types";
 
 function isUUID(str: string) {
   const uuidPattern = "^(X{8}-X{4}-4X{3}-[89abAB]X{3}-X{12})".replace(/X/g, "[0-9A-F]");
@@ -80,6 +80,33 @@ export function getUploadData(
       type,
     },
   };
+}
+
+export function parseRemoteFileUrl(url: string): {
+  type?: AssetType;
+  name?: string;
+  rawExtension?: string;
+} {
+  try {
+    const parsed = new URL(url);
+    const { filename, extension } = parseFilePath(parsed.pathname);
+    const name = filename || undefined;
+    // Check format query param first (common CDN pattern, e.g. ?format=png)
+    const format = parsed.searchParams.get("format")?.toUpperCase();
+    if (format && Object.values(AssetType).includes(format as AssetType)) {
+      return { type: format as AssetType, name };
+    }
+    // Fall back to the file extension in the pathname
+    const ext = extension.toUpperCase();
+    if (ext && Object.values(AssetType).includes(ext as AssetType)) {
+      return { type: ext as AssetType, name };
+    }
+    // Return the raw extension so callers can attempt alias resolution
+    return { name, rawExtension: ext || undefined };
+  } catch {
+    // Invalid URL — let the API handle it
+  }
+  return {};
 }
 
 type CamelToSnake<S extends string> = S extends `${infer Head}${infer Tail}`
