@@ -133,7 +133,15 @@ type CamelKeys<T> =
       ? { [K in keyof T as K extends string ? SnakeToCamel<K> : K]: CamelKeys<T[K]> }
       : T;
 
-function transformKeys(object: unknown, convertKey: (str: string) => string): unknown {
+// Dictionaries keyed by user-defined names (field identifiers, option field names)
+// keep their keys verbatim; only their values are transformed.
+const USER_KEYED = new Set(["fields", "option_values", "optionValues"]);
+
+function transformKeys(
+  object: unknown,
+  convertKey: (str: string) => string,
+  preserveKeys = false
+): unknown {
   if (!object) return object;
   if (Array.isArray(object)) {
     return object.map(val => transformKeys(val, convertKey));
@@ -141,7 +149,13 @@ function transformKeys(object: unknown, convertKey: (str: string) => string): un
   if (typeof object === "object") {
     return Object.keys(object).reduce(
       (acc, key) => {
-        acc[convertKey(key)] = transformKeys((object as Record<string, unknown>)[key], convertKey);
+        const value = (object as Record<string, unknown>)[key];
+        const preserveChildren = USER_KEYED.has(key) && !!value && !Array.isArray(value);
+        acc[preserveKeys ? key : convertKey(key)] = transformKeys(
+          value,
+          convertKey,
+          preserveChildren
+        );
         return acc;
       },
       {} as Record<string, unknown>

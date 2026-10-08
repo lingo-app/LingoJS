@@ -1,3 +1,12 @@
+# 3.3
+* `products()` query builder for listing and filtering products, with `fetchAll` paging
+* `fetchProduct`, `fetchProductTypes`, `fetchProductType` and `fetchMarkets`
+* `Product`, `Variant`, `ProductType`, `ProductTypeField` and `Market` types; `product` items in sections carry a `product`
+* Dictionaries keyed by user-defined names (`fields`, `optionValues`) now keep their keys verbatim instead of being camelized
+
+# 3.2
+* `createAssetFromRemoteFile` to create assets from a URL
+
 # 3.1
 * Add `createAssetItem` to place existing assets into kits
 
