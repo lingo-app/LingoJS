@@ -512,6 +512,44 @@ export interface Product {
   matchedVariants?: { uuid: string; optionValues: Record<string, string> }[];
 }
 
+/** A field value to write: the serialized shape, or a bare value (`"Red"`, `"22.50"`, `true`, `["s", "m"]`) */
+export type ProductFieldInput =
+  | ProductFieldValue
+  | string
+  | number
+  | boolean
+  | null
+  | string[]
+  | { assetUuid: string }[];
+
+/** Keyed by field identifier or uuid */
+export type ProductFieldsInput = Record<string, ProductFieldInput>;
+
+export interface ProductCreateData {
+  productTypeUuid: string;
+  fields: ProductFieldsInput;
+  marketUuid?: string;
+}
+
+/** A variant to write. Fields are the complete set of overrides; omit one to inherit it. */
+export interface VariantData {
+  uuid?: string;
+  fields?: ProductFieldsInput;
+  availability?: VariantAvailability;
+  marketUuid?: string | null;
+  displayOrder?: number;
+}
+
+export interface ProductUpdateData {
+  fields?: ProductFieldsInput;
+  marketUuid?: string | null;
+  status?: "active" | "archived";
+  /** The fields that drive variants, in order */
+  options?: { fieldUuid: string; displayOrder?: number }[];
+  /** The complete variant list; variants left out are deleted */
+  variants?: VariantData[];
+}
+
 export interface ProductList {
   products: Product[];
   total: number;

@@ -1,3 +1,8 @@
+# 3.4
+* `createProduct`, `updateProduct` and `archiveProduct`
+* `createVariant`, `updateVariant` and `deleteVariant` for editing one SKU at a time
+* `ProductCreateData`, `ProductUpdateData` and `VariantData` types; asset entries in fields may use `assetUuid`
+
 # 3.3
 * `products()` query builder for listing and filtering products, with `fetchAll` paging
 * `fetchProduct`, `fetchProductTypes`, `fetchProductType` and `fetchMarkets`
