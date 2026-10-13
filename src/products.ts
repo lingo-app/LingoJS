@@ -1,4 +1,12 @@
-import { Product, ProductList, ProductStatus } from "./types";
+import {
+  Product,
+  ProductCreateData,
+  ProductFieldsInput,
+  ProductList,
+  ProductStatus,
+  ProductUpdateData,
+  VariantData,
+} from "./types";
 import { encodeUnicode } from "./utils";
 import { CallAPI } from "./search";
 
@@ -207,4 +215,68 @@ export class ProductQuery {
     });
     return this;
   }
+}
+
+// Write payloads
+/*-------------------------------------------------------------------------------*/
+
+type Body = Record<string, unknown>;
+
+function assign(body: Body, key: string, value: unknown): void {
+  if (value !== undefined) body[key] = value;
+}
+
+/** Field values pass through verbatim except asset entries, which the API reads as `asset_uuid` */
+function fieldsBody(fields?: ProductFieldsInput): Body | undefined {
+  if (!fields) return undefined;
+  const result: Body = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value && typeof value === "object" && "assets" in value && Array.isArray(value.assets)) {
+      result[key] = {
+        ...value,
+        assets: value.assets.map(asset => ({
+          asset_uuid: asset.assetUuid,
+          display_order: asset.displayOrder,
+          inherited: asset.inherited,
+        })),
+      };
+    } else if (Array.isArray(value) && value.length && typeof value[0] === "object") {
+      result[key] = (value as { assetUuid: string }[]).map(asset => ({
+        asset_uuid: asset.assetUuid,
+      }));
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+export function variantBody(data: VariantData): Body {
+  const body: Body = {};
+  assign(body, "uuid", data.uuid);
+  assign(body, "fields", fieldsBody(data.fields));
+  assign(body, "availability", data.availability);
+  assign(body, "market_uuid", data.marketUuid);
+  assign(body, "display_order", data.displayOrder);
+  return body;
+}
+
+export function productBody(data: ProductCreateData | ProductUpdateData): Body {
+  const body: Body = {};
+  const create = data as ProductCreateData;
+  const update = data as ProductUpdateData;
+  assign(body, "product_type_uuid", create.productTypeUuid);
+  assign(body, "fields", fieldsBody(data.fields));
+  assign(body, "market_uuid", data.marketUuid);
+  assign(body, "status", update.status);
+  assign(
+    body,
+    "options",
+    update.options?.map(option => ({
+      field_uuid: option.fieldUuid,
+      display_order: option.displayOrder,
+    }))
+  );
+  assign(body, "variants", update.variants?.map(variantBody));
+  return body;
 }

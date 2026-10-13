@@ -18,6 +18,10 @@ import {
   ProductType,
   ProductTypeList,
   MarketList,
+  ProductCreateData,
+  ProductUpdateData,
+  Variant,
+  VariantData,
 } from "./types";
 import {
   formatDate,
@@ -29,7 +33,7 @@ import {
   snakeify,
 } from "./utils";
 import { Search } from "./search";
-import { ProductQuery } from "./products";
+import { ProductQuery, productBody, variantBody } from "./products";
 import { TinyColor } from "@ctrl/tinycolor";
 import { ItemData, Upload, AssetData } from "./Upload";
 import { assert } from "console";
@@ -301,6 +305,88 @@ class Lingo {
   async fetchMarkets(page = 1, limit = 50, sort?: string): Promise<MarketList> {
     const res = await this.callAPI("GET", "/markets", { qs: { page, limit, sort } });
     return { markets: res.markets, total: res.total };
+  }
+
+  /**
+   * Create a product. The API creates its base variant.
+   *
+   * @param data The product type, field values and optional market
+   * @returns The product with its product type, variants and markets
+   */
+  async createProduct(data: ProductCreateData): Promise<Product> {
+    const res = await this.callAPI("POST", "/products", { data: productBody(data) });
+    return res.product as Product;
+  }
+
+  /**
+   * Update a product. Products are saved as whole objects: `fields` replaces
+   * every product value, and `variants` replaces the variant list.
+   *
+   * @param uuid The uuid of the product
+   * @param data The values to save
+   * @returns The updated product
+   */
+  async updateProduct(uuid: string, data: ProductUpdateData): Promise<Product> {
+    const res = await this.callAPI("PUT", `/products/${uuid}`, { data: productBody(data) });
+    return res.product as Product;
+  }
+
+  /**
+   * Archive a product. Its variants are retired and its kit items trashed.
+   * Update the product's status to `active` to restore it.
+   *
+   * @param uuid The uuid of the product
+   * @returns The archived product
+   */
+  async archiveProduct(uuid: string): Promise<Product> {
+    const res = await this.callAPI("DELETE", `/products/${uuid}`);
+    return res.product as Product;
+  }
+
+  /**
+   * Add a variant to a product. Include a value for each of the product's option fields.
+   *
+   * @param productUuid The uuid of the product
+   * @param data The variant's fields, availability and market
+   * @returns The new variant
+   */
+  async createVariant(productUuid: string, data: VariantData): Promise<Variant> {
+    const res = await this.callAPI("POST", `/products/${productUuid}/variants`, {
+      data: variantBody(data),
+    });
+    return res.variant as Variant;
+  }
+
+  /**
+   * Replace a variant. `fields` is the complete set of overrides; a field left
+   * out reverts to the product's value.
+   *
+   * @param productUuid The uuid of the product
+   * @param variantUuid The uuid of the variant
+   * @param data The variant's fields, availability and market
+   * @returns The updated variant
+   */
+  async updateVariant(
+    productUuid: string,
+    variantUuid: string,
+    data: VariantData
+  ): Promise<Variant> {
+    const res = await this.callAPI("PUT", `/products/${productUuid}/variants/${variantUuid}`, {
+      data: variantBody(data),
+    });
+    return res.variant as Variant;
+  }
+
+  /**
+   * Delete a variant. A product always keeps at least one variant.
+   *
+   * @param productUuid The uuid of the product
+   * @param variantUuid The uuid of the variant
+   * @returns The product with its remaining variants
+   */
+  async deleteVariant(productUuid: string, variantUuid: string): Promise<Product> {
+    const res = await this.callAPI("DELETE", `/products/${productUuid}/variants/${variantUuid}`);
+    return res.product as Product;
   }
 
   /**
