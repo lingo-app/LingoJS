@@ -545,7 +545,7 @@ export interface ProductUpdateData {
   marketUuid?: string | null;
   status?: "active" | "archived";
   /** The fields that drive variants, in order */
-  options?: { fieldUuid: string; displayOrder?: number }[];
+  options?: { fieldUuid: string }[];
   /** The complete variant list; variants left out are deleted */
   variants?: VariantData[];
 }
