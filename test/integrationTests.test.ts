@@ -322,6 +322,33 @@ describe("Write requests", () => {
         });
       });
 
+      describe("Updating and replacing assets", () => {
+        it(
+          "Should update asset metadata",
+          async () => {
+            const { asset } = await lingo.createFileAsset(__dirname + "/Logo.svg");
+            const updated = await lingo.updateAsset(asset.uuid, {
+              name: "Renamed",
+              notes: "Notes",
+            });
+            expect(updated.uuid).toEqual(asset.uuid);
+            expect(updated.name).toEqual("Renamed");
+          },
+          20 * 1000
+        );
+
+        it(
+          "Should replace an asset file",
+          async () => {
+            const { asset } = await lingo.createFileAsset(__dirname + "/Logo.svg");
+            const updated = await lingo.replaceAssetFile(asset.uuid, __dirname + "/Logo.svg");
+            expect(updated.uuid).toEqual(asset.uuid);
+            expect(updated.type).toEqual(AssetType.SVG);
+          },
+          20 * 1000
+        );
+      });
+
       describe("File assets", () => {
         it(
           "Should create file asset with an item",
