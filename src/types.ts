@@ -62,6 +62,7 @@ export enum ItemType {
   CodeSnippet = "code_snippet",
   Guide = "guide",
   Gallery = "gallery",
+  Product = "product",
   /** Support content is deprecated, use asset type with displayProperties instead */
   SupportingContent = "supporting_image",
 }
@@ -151,6 +152,9 @@ export interface Item {
   dateUpdated: string;
   assetUuid?: string;
   asset?: Asset;
+  productUuid?: string;
+  /** Included for `product` items when fetching a section */
+  product?: Product;
   data: {
     content?: string;
     codeLanguage?: string;
@@ -363,3 +367,162 @@ export type ContentType = {
   eligibleForDirectLinks: boolean;
   eligibleForCustomPreviews: boolean;
 };
+
+// MARK : Products
+// -------------------------------------------------------------------------------
+export type ProductStatus = "active" | "archived" | "deleted";
+export type VariantAvailability = "draft" | "hidden" | "coming_soon" | "available" | "retired";
+export type FieldValueSource = null | "override" | "inherited";
+
+export type ProductFieldType =
+  | "text"
+  | "number"
+  | "date"
+  | "select"
+  | "multiselect"
+  | "boolean"
+  | "name"
+  | "description"
+  | "sku"
+  | "price"
+  | "asset"
+  | "images"
+  | "cannabis_subcategory"
+  | "phenotype"
+  | "taste"
+  | "mood"
+  | "ingredients"
+  | "terpenes";
+
+export interface ProductTypeFieldOption {
+  uuid: string;
+  value: string;
+  label: string;
+  displayOrder: number;
+}
+
+export interface ProductTypeField {
+  id: number;
+  uuid: string;
+  productTypeUuid: string;
+  name: string;
+  /** Slug used as the key in `Product.fields` and `Variant.fields` */
+  identifier: string;
+  fieldType: ProductFieldType;
+  required: boolean;
+  status: Status;
+  displayOrder: number;
+  options: ProductTypeFieldOption[];
+  config: Record<string, unknown>;
+  creatorId: number;
+  dateAdded: string;
+  dateUpdated: string;
+}
+
+export interface ProductType {
+  id: number;
+  uuid: string;
+  spaceId: number;
+  name: string;
+  description: string | null;
+  status: Status;
+  counts: { fields: number; products: number };
+  creatorId: number;
+  dateAdded: string;
+  dateUpdated: string;
+  fields?: ProductTypeField[];
+}
+
+export interface Market {
+  id: number;
+  uuid: string;
+  spaceId: number;
+  name: string;
+  notes: string | null;
+  status: Status;
+  displayOrder: number;
+  counts: { products: number };
+  creatorId: number;
+  dateAdded: string;
+  dateUpdated: string;
+}
+
+export type SelectedOption = { uuid: string | null; value: string; label: string };
+
+/** Number values are fixed-point strings matching the field's configured decimals */
+export type ScalarFieldValue = {
+  value: string | number | boolean | null;
+  source: FieldValueSource;
+};
+export type SelectFieldValue = { option: SelectedOption | null; source: FieldValueSource };
+export type MultiselectFieldValue = { options: SelectedOption[]; source: FieldValueSource };
+export type AssetFieldValue = {
+  assets: { assetUuid: string; displayOrder: number; inherited: boolean; asset: Asset | null }[];
+  source: FieldValueSource;
+};
+export type ProductFieldValue =
+  | ScalarFieldValue
+  | SelectFieldValue
+  | MultiselectFieldValue
+  | AssetFieldValue;
+
+/** Keyed by `ProductTypeField.identifier` */
+export type ProductFields = Record<string, ProductFieldValue>;
+
+export interface Variant {
+  id: number;
+  uuid: string;
+  spaceId: number;
+  productUuid: string;
+  status: Status;
+  availability: VariantAvailability;
+  /** Display labels keyed by option field name, e.g. `{ Size: "1g" }`; typed values live in `fields` */
+  optionValues: Record<string, string>;
+  fields: ProductFields;
+  marketUuid: string | null;
+  computedMarketUuid: string | null;
+  displayOrder: number;
+  creatorId: number;
+  dateAdded: string;
+  dateUpdated: string;
+}
+
+export interface Product {
+  id: number;
+  uuid: string;
+  spaceId: number;
+  /** Set on the frozen copy of a product baked into a published kit version */
+  sourceUuid: string | null;
+  productTypeUuid: string;
+  name: string | null;
+  status: ProductStatus;
+  counts: { variants: number; activeVariants: number; options: number; markets: number };
+  fields: ProductFields;
+  /** The fields whose values drive this product's variants, in order */
+  options: { fieldUuid: string }[];
+  marketUuid: string | null;
+  creatorId: number;
+  dateAdded: string;
+  dateUpdated: string;
+  productType?: ProductType;
+  previewAsset?: Asset | null;
+  variants?: Variant[];
+  markets?: Market[];
+  /** Variants that satisfied a name or field filter, included when filtering */
+  matchedVariants?: { uuid: string; optionValues: Record<string, string> }[];
+}
+
+export interface ProductList {
+  products: Product[];
+  total: number;
+}
+
+export interface ProductTypeList {
+  productTypes: ProductType[];
+  total: number;
+}
+
+export interface MarketList {
+  markets: Market[];
+  total: number;
+}

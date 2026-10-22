@@ -14,6 +14,10 @@ import {
   Changelog,
   DirectLink,
   CustomField,
+  Product,
+  ProductType,
+  ProductTypeList,
+  MarketList,
 } from "./types";
 import {
   formatDate,
@@ -25,6 +29,7 @@ import {
   snakeify,
 } from "./utils";
 import { Search } from "./search";
+import { ProductQuery } from "./products";
 import { TinyColor } from "@ctrl/tinycolor";
 import { ItemData, Upload, AssetData } from "./Upload";
 import { assert } from "console";
@@ -244,6 +249,58 @@ class Lingo {
    */
   search(): Search {
     return new Search(this.callAPI.bind(this));
+  }
+
+  // MARK : Products
+  // -------------------------------------------------------------------------------
+
+  /**
+   * Create a new query object to list and filter products
+   * @returns A new product query
+   */
+  products(): ProductQuery {
+    return new ProductQuery(this.callAPI.bind(this));
+  }
+
+  /**
+   * Fetch a single product with its product type, variants and markets
+   * @param uuid the product uuid
+   * @returns A product
+   */
+  async fetchProduct(uuid: string): Promise<Product> {
+    const res = await this.callAPI("GET", `/products/${uuid}`);
+    return res.product;
+  }
+
+  /**
+   * Fetch the product types in your space, each with its field definitions
+   * @param page the page of results
+   * @param limit the max number of results, up to 200
+   * @param sort `name`, `date_added`, `fields` or `products`, prefixed with `-` to reverse
+   */
+  async fetchProductTypes(page = 1, limit = 50, sort?: string): Promise<ProductTypeList> {
+    const res = await this.callAPI("GET", "/product-types", { qs: { page, limit, sort } });
+    return { productTypes: res.productTypes, total: res.total };
+  }
+
+  /**
+   * Fetch a single product type with its field definitions
+   * @param uuid the product type uuid
+   */
+  async fetchProductType(uuid: string): Promise<ProductType> {
+    const res = await this.callAPI("GET", `/product-types/${uuid}`);
+    return res.productType;
+  }
+
+  /**
+   * Fetch the markets in your space
+   * @param page the page of results
+   * @param limit the max number of results, up to 200
+   * @param sort `name`, `notes`, `date_added` or `products`, prefixed with `-` to reverse
+   */
+  async fetchMarkets(page = 1, limit = 50, sort?: string): Promise<MarketList> {
+    const res = await this.callAPI("GET", "/markets", { qs: { page, limit, sort } });
+    return { markets: res.markets, total: res.total };
   }
 
   /**

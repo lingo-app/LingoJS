@@ -5,7 +5,7 @@
 
 import { ReadStream } from "fs";
 import { strict as assert } from "assert";
-import lingo, { AssetType, ItemType, LingoError } from "../src/index";
+import lingo, { AssetType, ItemType, Lingo, LingoError } from "../src/index";
 import {
   getUploadData,
   parseFilePath,
@@ -298,5 +298,136 @@ describe("Search", () => {
     assert.equal(search._filters[0].type, "before");
     assert.equal(search._filters[0].period, "day");
     assert.equal(search._filters[0].length, 30);
+  });
+});
+
+describe("Product response parsing", () => {
+  it("Should keep field identifiers and option names verbatim", () => {
+    const res = parseJSONResponse({
+      success: true,
+      result: {
+        product: {
+          product_type_uuid: "PT",
+          fields: { thc_content: { value: "22.50", source: null } },
+          variants: [
+            {
+              option_values: { "Pack Size": "1g" },
+              fields: { thc_content: { value: "1", source: "override" } },
+            },
+          ],
+        },
+      },
+    });
+    assert.deepEqual(res.product.fields, { thc_content: { value: "22.50", source: null } });
+    assert.equal(res.product.productTypeUuid, "PT");
+    assert.deepEqual(res.product.variants[0].optionValues, { "Pack Size": "1g" });
+    assert.equal(res.product.variants[0].fields.thc_content.source, "override");
+  });
+
+  it("Should still camelize arrays named fields", () => {
+    const res = parseJSONResponse({
+      success: true,
+      result: { fields: [{ field_type: "text" }] },
+    });
+    assert.deepEqual(res.fields, [{ fieldType: "text" }]);
+  });
+});
+
+describe("Products", () => {
+  const callAPI = jest.fn();
+  const client = new Lingo(1, "token");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (client as any).callAPI = callAPI;
+
+  beforeEach(() => {
+    callAPI.mockReset();
+    callAPI.mockResolvedValue({ products: [], total: 0 });
+  });
+
+  it("Should default to the first page of 50", async () => {
+    await client.products().fetch();
+    expect(callAPI).toHaveBeenCalledWith("GET", "/products", { qs: { page: 1, limit: 50 } });
+  });
+
+  it("Should cap the limit at 200", () => {
+    assert.equal(client.products().limit(500)._limit, 200);
+  });
+
+  it("Should add plain query params", async () => {
+    await client
+      .products()
+      .ofType("PT")
+      .status("archived")
+      .includeVariants()
+      .sortBy("name", true)
+      .page(3)
+      .fetch();
+    const qs = callAPI.mock.calls[0][2].qs;
+    assert.deepEqual(qs, {
+      page: 3,
+      limit: 50,
+      status: "archived",
+      product_type_uuid: "PT",
+      sort: "-name",
+      include: "variants",
+    });
+  });
+
+  it("Should encode filters as base64 JSON", async () => {
+    await client
+      .products()
+      .matchingName("Blue")
+      .inMarket(null)
+      .whereText("F1", "contains", "Dream")
+      .whereNumber("F2", "between", "1", "2")
+      .whereBoolean("F3", false)
+      .whereSelect("F4", "in", ["O1"])
+      .whereMultiselect("F5", "is_empty")
+      .fetch();
+    const qs = callAPI.mock.calls[0][2].qs;
+    const filters = JSON.parse(Buffer.from(qs.filters, "base64").toString("utf-8"));
+    assert.deepEqual(filters, [
+      { type: "name", value: "Blue" },
+      { type: "market", is_null: true },
+      { type: "field-text", field_uuid: "F1", operator: "contains", value: "Dream" },
+      { type: "field-number", field_uuid: "F2", operator: "between", value: "1", value2: "2" },
+      { type: "field-boolean", field_uuid: "F3", operator: "eq", value: false },
+      { type: "field-select", field_uuid: "F4", operator: "in", option_uuids: ["O1"] },
+      { type: "field-multiselect", field_uuid: "F5", operator: "is_empty", match: "any" },
+    ]);
+  });
+
+  it("Should page through every product in fetchAll", async () => {
+    const full = Array.from({ length: 200 }, (_, i) => ({ uuid: `P${i}` }));
+    callAPI.mockResolvedValueOnce({ products: full, total: 201 });
+    callAPI.mockResolvedValueOnce({ products: [{ uuid: "P200" }], total: 201 });
+    const query = client.products().limit(10);
+    const products = await query.fetchAll();
+    assert.equal(products.length, 201);
+    assert.equal(callAPI.mock.calls[0][2].qs.limit, 200);
+    assert.equal(callAPI.mock.calls[1][2].qs.page, 2);
+    assert.equal(query._limit, 10);
+  });
+
+  it("Should fetch a product", async () => {
+    callAPI.mockResolvedValue({ product: { uuid: "P1" } });
+    const product = await client.fetchProduct("P1");
+    expect(callAPI).toHaveBeenCalledWith("GET", "/products/P1");
+    assert.equal(product.uuid, "P1");
+  });
+
+  it("Should fetch product types and markets", async () => {
+    callAPI.mockResolvedValueOnce({ productTypes: [{ uuid: "PT" }], total: 1 });
+    callAPI.mockResolvedValueOnce({ productType: { uuid: "PT" } });
+    callAPI.mockResolvedValueOnce({ markets: [{ uuid: "M" }], total: 1 });
+    assert.deepEqual(await client.fetchProductTypes(2, 10, "-name"), {
+      productTypes: [{ uuid: "PT" }],
+      total: 1,
+    });
+    expect(callAPI).toHaveBeenCalledWith("GET", "/product-types", {
+      qs: { page: 2, limit: 10, sort: "-name" },
+    });
+    assert.equal((await client.fetchProductType("PT")).uuid, "PT");
+    assert.deepEqual(await client.fetchMarkets(), { markets: [{ uuid: "M" }], total: 1 });
   });
 });
