@@ -476,7 +476,7 @@ export interface Variant {
   productUuid: string;
   status: Status;
   availability: VariantAvailability;
-  /** Keyed by the name of each option field, e.g. `{ Size: "1g" }` */
+  /** Display labels keyed by option field name, e.g. `{ Size: "1g" }`; typed values live in `fields` */
   optionValues: Record<string, string>;
   fields: ProductFields;
   marketUuid: string | null;
@@ -485,14 +485,6 @@ export interface Variant {
   creatorId: number;
   dateAdded: string;
   dateUpdated: string;
-}
-
-export interface ProductPlacement extends Item {
-  /** The parent item when the product sits inside a gallery */
-  item: Item | null;
-  section: Section;
-  kitVersion: KitVersion;
-  kit: Kit;
 }
 
 export interface Product {
@@ -506,8 +498,8 @@ export interface Product {
   status: ProductStatus;
   counts: { variants: number; activeVariants: number; options: number; markets: number };
   fields: ProductFields;
-  /** The fields whose values drive this product's variants */
-  options: { fieldUuid: string; displayOrder: number }[];
+  /** The fields whose values drive this product's variants, in order */
+  options: { fieldUuid: string }[];
   marketUuid: string | null;
   creatorId: number;
   dateAdded: string;
@@ -516,8 +508,6 @@ export interface Product {
   previewAsset?: Asset | null;
   variants?: Variant[];
   markets?: Market[];
-  /** Kit items referencing this product, included by `fetchProduct` */
-  items?: ProductPlacement[];
   /** Variants that satisfied a name or field filter, included when filtering */
   matchedVariants?: { uuid: string; optionValues: Record<string, string> }[];
 }

@@ -263,7 +263,7 @@ class Lingo {
   }
 
   /**
-   * Fetch a single product with its product type, variants, markets and kit placements
+   * Fetch a single product with its product type, variants and markets
    * @param uuid the product uuid
    * @returns A product
    */
