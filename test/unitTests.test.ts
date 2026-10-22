@@ -509,7 +509,7 @@ describe("Product writes", () => {
       data: {
         status: "active",
         market_uuid: null,
-        options: [{ field_uuid: "F1", display_order: undefined }],
+        options: [{ field_uuid: "F1" }],
         variants: [
           { uuid: "V1", fields: { size: "S" } },
           { fields: { size: "M" }, availability: "available", display_order: 1 },

@@ -272,10 +272,7 @@ export function productBody(data: ProductCreateData | ProductUpdateData): Body {
   assign(
     body,
     "options",
-    update.options?.map(option => ({
-      field_uuid: option.fieldUuid,
-      display_order: option.displayOrder,
-    }))
+    update.options?.map(option => ({ field_uuid: option.fieldUuid }))
   );
   assign(body, "variants", update.variants?.map(variantBody));
   return body;
