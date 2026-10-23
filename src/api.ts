@@ -36,6 +36,24 @@ import { assert } from "console";
 
 type KitIncludes = "use_versions" | "versions" | null;
 
+/** Convert color strings (hex, rgb, hsl, etc.) to the structured records the API expects */
+function colorRecords(colors: string[]) {
+  return colors.map((color) => {
+    const c = new TinyColor(color);
+    if (!c.isValid) {
+      throw Error(`Invalid color: ${color}`);
+    }
+    const hsv = c.toHsv();
+    return {
+      hue: hsv.h,
+      saturation: hsv.s * 100,
+      brightness: hsv.v * 100,
+      alpha: hsv.a * 100,
+      coverage: 100 / colors.length,
+    };
+  });
+}
+
 class Lingo {
   baseURL = "https://api.lingoapp.com/1";
   private spaceId: number | string;
@@ -566,11 +584,7 @@ class Lingo {
     data?: Omit<AssetData, "type">,
     item?: ItemData
   ): Promise<{ asset?: Asset; item?: Item }> {
-    const c = new TinyColor(color);
-    const hsv = c.toHsv();
-    if (!c.isValid) {
-      throw Error(`Invalid color: ${color}`);
-    }
+    const colors = colorRecords([color]);
 
     const _item = prepareItemData(item, ItemType.Asset);
     const { dateAdded, dateUpdated, ...otherData } = data ?? {};
@@ -580,15 +594,7 @@ class Lingo {
       dateUpdated: formatDate(dateUpdated),
       item: _item,
       type: AssetType.Color,
-      colors: [
-        {
-          hue: hsv.h,
-          saturation: hsv.s * 100,
-          brightness: hsv.v * 100,
-          alpha: hsv.a * 100,
-          coverage: 100,
-        },
-      ],
+      colors,
     };
 
     const res = await this.callAPI("POST", "/assets", {
@@ -718,9 +724,13 @@ class Lingo {
    * @returns The updated asset
    */
   async updateAsset(assetId: string, data: AssetUpdateData): Promise<Asset> {
-    const { dateUpdated, ...otherData } = data;
+    const { dateUpdated, colors, ...otherData } = data;
     const res = await this.callAPI("PUT", `/assets/${assetId}`, {
-      data: snakeify({ ...otherData, dateUpdated: formatDate(dateUpdated) }),
+      data: snakeify({
+        ...otherData,
+        colors: colors && colorRecords(colors),
+        dateUpdated: formatDate(dateUpdated),
+      }),
     });
     return res.asset;
   }

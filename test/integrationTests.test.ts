@@ -337,6 +337,15 @@ describe("Write requests", () => {
           20 * 1000
         );
 
+        it("Should update the colors of a color asset", async () => {
+          const { asset } = await lingo.createColorAsset("#FFFFFF");
+          const updated = await lingo.updateAsset(asset.uuid, { colors: ["#FF0000"] });
+          expect(updated.uuid).toEqual(asset.uuid);
+          expect(updated.colors.length).toEqual(1);
+          expect(Math.round(updated.colors[0].hue)).toEqual(0);
+          expect(Math.round(updated.colors[0].saturation)).toEqual(100);
+        });
+
         it(
           "Should replace an asset file",
           async () => {
