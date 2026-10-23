@@ -38,7 +38,7 @@ type KitIncludes = "use_versions" | "versions" | null;
 
 /** Convert color strings (hex, rgb, hsl, etc.) to the structured records the API expects */
 function colorRecords(colors: string[]) {
-  return colors.map((color) => {
+  return colors.map(color => {
     const c = new TinyColor(color);
     if (!c.isValid) {
       throw Error(`Invalid color: ${color}`);
