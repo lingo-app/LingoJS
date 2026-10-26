@@ -433,6 +433,44 @@ export interface ProductType {
   fields?: ProductTypeField[];
 }
 
+export type ProductTypeFieldOptionInput = string | { uuid?: string; value: string; label?: string };
+
+/** A field to write. Existing fields are matched by `uuid`; `fieldType` can't change once created. */
+export interface ProductTypeFieldData {
+  uuid?: string;
+  name: string;
+  /** Lowercase letters, digits and underscores; generated from the name when left out */
+  identifier?: string;
+  fieldType: ProductFieldType;
+  required?: boolean;
+  displayOrder?: number;
+  /** Select and multiselect choices; a string is both value and label */
+  options?: ProductTypeFieldOptionInput[];
+  /** Type specific settings, e.g. `{ decimals: 1 }` for a number field */
+  config?: Record<string, unknown>;
+}
+
+export interface ProductTypeCreateData {
+  name: string;
+  description?: string;
+  fields?: ProductTypeFieldData[];
+}
+
+export interface ProductTypeUpdateData {
+  name?: string;
+  description?: string | null;
+  /** The complete field list; fields left out are deleted. Fetched fields can be passed back as is. */
+  fields?: (ProductTypeFieldData | ProductTypeField)[];
+}
+
+export type ProductTypeFieldUpdateData = Partial<Omit<ProductTypeFieldData, "uuid" | "fieldType">>;
+
+export interface ProductTypeTemplate {
+  key: string;
+  name: string;
+  description: string;
+}
+
 export interface Market {
   id: number;
   uuid: string;

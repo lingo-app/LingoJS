@@ -4,10 +4,15 @@ import {
   ProductFieldsInput,
   ProductList,
   ProductStatus,
+  ProductTypeCreateData,
+  ProductTypeField,
+  ProductTypeFieldData,
+  ProductTypeFieldUpdateData,
+  ProductTypeUpdateData,
   ProductUpdateData,
   VariantData,
 } from "./types";
-import { encodeUnicode } from "./utils";
+import { encodeUnicode, snakeify } from "./utils";
 import { CallAPI } from "./search";
 
 export type ProductSort =
@@ -275,5 +280,44 @@ export function productBody(data: ProductCreateData | ProductUpdateData): Body {
     update.options?.map(option => ({ field_uuid: option.fieldUuid }))
   );
   assign(body, "variants", update.variants?.map(variantBody));
+  return body;
+}
+
+const FIELD_KEYS = [
+  "uuid",
+  "name",
+  "identifier",
+  "fieldType",
+  "required",
+  "displayOrder",
+  "options",
+  "config",
+] as const;
+
+/** Picks the writable keys, so a fetched field can be sent back as is */
+export function fieldBody(
+  data: ProductTypeFieldData | ProductTypeFieldUpdateData | ProductTypeField
+): Body {
+  const field: Body = {};
+  for (const key of FIELD_KEYS) {
+    const value = (data as Record<string, unknown>)[key];
+    if (value === undefined) continue;
+    field[key] =
+      key === "options" && Array.isArray(value)
+        ? value.map(option =>
+            typeof option === "string"
+              ? option
+              : { uuid: option.uuid, value: option.value, label: option.label }
+          )
+        : value;
+  }
+  return snakeify(field) as Body;
+}
+
+export function productTypeBody(data: ProductTypeCreateData | ProductTypeUpdateData): Body {
+  const body: Body = {};
+  assign(body, "name", data.name);
+  assign(body, "description", data.description);
+  assign(body, "fields", data.fields?.map(fieldBody));
   return body;
 }

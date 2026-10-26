@@ -16,7 +16,13 @@ import {
   CustomField,
   Product,
   ProductType,
+  ProductTypeCreateData,
+  ProductTypeField,
+  ProductTypeFieldData,
+  ProductTypeFieldUpdateData,
   ProductTypeList,
+  ProductTypeTemplate,
+  ProductTypeUpdateData,
   Market,
   MarketData,
   MarketList,
@@ -35,7 +41,7 @@ import {
   snakeify,
 } from "./utils";
 import { Search } from "./search";
-import { ProductQuery, productBody, variantBody } from "./products";
+import { ProductQuery, fieldBody, productBody, productTypeBody, variantBody } from "./products";
 import { TinyColor } from "@ctrl/tinycolor";
 import { ItemData, Upload, AssetData } from "./Upload";
 import { assert } from "console";
@@ -296,6 +302,118 @@ class Lingo {
   async fetchProductType(uuid: string): Promise<ProductType> {
     const res = await this.callAPI("GET", `/product-types/${uuid}`);
     return res.productType;
+  }
+
+  /**
+   * Create a product type, optionally with its fields.
+   *
+   * @param data The name, description and fields
+   * @returns The product type with its fields
+   */
+  async createProductType(data: ProductTypeCreateData): Promise<ProductType> {
+    const res = await this.callAPI("POST", "/product-types", { data: productTypeBody(data) });
+    return res.productType as ProductType;
+  }
+
+  /**
+   * Update a product type. `fields` is the complete list: fields are matched
+   * by uuid, new ones are created, and fields left out are deleted along with
+   * their values. A field's type can't change.
+   *
+   * @param uuid The uuid of the product type
+   * @param data The properties to change
+   * @returns The updated product type with its fields
+   */
+  async updateProductType(uuid: string, data: ProductTypeUpdateData): Promise<ProductType> {
+    const res = await this.callAPI("PUT", `/product-types/${uuid}`, {
+      data: productTypeBody(data),
+    });
+    return res.productType as ProductType;
+  }
+
+  /**
+   * Delete a product type. Fails while any product uses it.
+   *
+   * @param uuid The uuid of the product type
+   * @returns The deleted product type
+   */
+  async deleteProductType(uuid: string): Promise<ProductType> {
+    const res = await this.callAPI("DELETE", `/product-types/${uuid}`);
+    return res.productType as ProductType;
+  }
+
+  /**
+   * Add a field to a product type.
+   *
+   * @param productTypeUuid The uuid of the product type
+   * @param data The field definition
+   * @returns The new field
+   */
+  async createProductTypeField(
+    productTypeUuid: string,
+    data: ProductTypeFieldData
+  ): Promise<ProductTypeField> {
+    const res = await this.callAPI("POST", `/product-types/${productTypeUuid}/fields`, {
+      data: fieldBody(data),
+    });
+    return res.field as ProductTypeField;
+  }
+
+  /**
+   * Update a field. Properties left out are unchanged; `options` replaces the
+   * choices, matching existing ones by uuid.
+   *
+   * @param productTypeUuid The uuid of the product type
+   * @param fieldUuid The uuid of the field
+   * @param data The properties to change
+   * @returns The updated field
+   */
+  async updateProductTypeField(
+    productTypeUuid: string,
+    fieldUuid: string,
+    data: ProductTypeFieldUpdateData
+  ): Promise<ProductTypeField> {
+    const res = await this.callAPI("PUT", `/product-types/${productTypeUuid}/fields/${fieldUuid}`, {
+      data: fieldBody(data),
+    });
+    return res.field as ProductTypeField;
+  }
+
+  /**
+   * Delete a field and its values on every product. Fails while the field
+   * drives variants on any product.
+   *
+   * @param productTypeUuid The uuid of the product type
+   * @param fieldUuid The uuid of the field
+   * @returns The product type without the field
+   */
+  async deleteProductTypeField(productTypeUuid: string, fieldUuid: string): Promise<ProductType> {
+    const res = await this.callAPI(
+      "DELETE",
+      `/product-types/${productTypeUuid}/fields/${fieldUuid}`
+    );
+    return res.productType as ProductType;
+  }
+
+  /**
+   * The product type templates Lingo can create for you.
+   */
+  async fetchProductTypeTemplates(): Promise<ProductTypeTemplate[]> {
+    const res = await this.callAPI("GET", "/product-types/templates");
+    return res.templates as ProductTypeTemplate[];
+  }
+
+  /**
+   * Create a template's product types. Types whose name already exists in the
+   * space are skipped and listed by name.
+   *
+   * @param key The template key, e.g. `cannabis_types`
+   */
+  async applyProductTypeTemplate(
+    key: string
+  ): Promise<{ productTypes: ProductType[]; skipped: string[] }> {
+    const res = await this.callAPI("POST", `/product-types/templates/${key}`);
+    return { productTypes: res.productTypes, skipped: res.skipped };
   }
 
   /**

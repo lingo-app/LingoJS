@@ -5,7 +5,7 @@
 
 import { ReadStream } from "fs";
 import { strict as assert } from "assert";
-import lingo, { AssetType, ItemType, Lingo, LingoError } from "../src/index";
+import lingo, { AssetType, ItemType, Lingo, LingoError, ProductTypeField } from "../src/index";
 import {
   getUploadData,
   parseFilePath,
@@ -577,5 +577,111 @@ describe("Market writes", () => {
 
     await client.deleteMarket("M1");
     expect(callAPI).toHaveBeenCalledWith("DELETE", "/markets/M1");
+  });
+});
+
+describe("Product type writes", () => {
+  const callAPI = jest.fn();
+  const client = new Lingo(1, "token");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (client as any).callAPI = callAPI;
+
+  beforeEach(() => {
+    callAPI.mockReset();
+    callAPI.mockResolvedValue({
+      productType: { uuid: "PT" },
+      field: { uuid: "F1" },
+      productTypes: [{ uuid: "PT" }],
+      skipped: ["Flower"],
+      templates: [{ key: "cannabis_types" }],
+    });
+  });
+
+  it("Should snake_case fields, options and config on create", async () => {
+    await client.createProductType({
+      name: "Apparel",
+      description: "Clothing",
+      fields: [
+        { name: "Name", fieldType: "name", required: true },
+        { name: "Size", fieldType: "select", options: ["s", { value: "m", label: "M" }] },
+        { name: "Price", fieldType: "price", config: { thousandsSeparator: true } },
+      ],
+    });
+    expect(callAPI).toHaveBeenCalledWith("POST", "/product-types", {
+      data: {
+        name: "Apparel",
+        description: "Clothing",
+        fields: [
+          { name: "Name", field_type: "name", required: true },
+          { name: "Size", field_type: "select", options: ["s", { value: "m", label: "M" }] },
+          { name: "Price", field_type: "price", config: { thousands_separator: true } },
+        ],
+      },
+    });
+  });
+
+  it("Should send fetched fields back with only their writable keys", async () => {
+    const fetched: ProductTypeField = {
+      id: 1,
+      uuid: "F1",
+      productTypeUuid: "PT",
+      name: "Size",
+      identifier: "size",
+      fieldType: "select",
+      required: false,
+      status: "active",
+      displayOrder: 10,
+      options: [{ uuid: "O1", value: "s", label: "S", displayOrder: 0 }],
+      config: {},
+      creatorId: 1,
+      dateAdded: "",
+      dateUpdated: "",
+    };
+    await client.updateProductType("PT", { description: null, fields: [fetched] });
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/product-types/PT", {
+      data: {
+        description: null,
+        fields: [
+          {
+            uuid: "F1",
+            name: "Size",
+            identifier: "size",
+            field_type: "select",
+            required: false,
+            display_order: 10,
+            options: [{ uuid: "O1", value: "s", label: "S" }],
+            config: {},
+          },
+        ],
+      },
+    });
+  });
+
+  it("Should route field writes and templates", async () => {
+    const field = await client.createProductTypeField("PT", {
+      name: "Weight",
+      fieldType: "number",
+    });
+    assert.equal(field.uuid, "F1");
+    expect(callAPI).toHaveBeenCalledWith("POST", "/product-types/PT/fields", {
+      data: { name: "Weight", field_type: "number" },
+    });
+
+    await client.updateProductTypeField("PT", "F1", { required: true, displayOrder: 2 });
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/product-types/PT/fields/F1", {
+      data: { required: true, display_order: 2 },
+    });
+
+    await client.deleteProductTypeField("PT", "F1");
+    expect(callAPI).toHaveBeenCalledWith("DELETE", "/product-types/PT/fields/F1");
+
+    await client.deleteProductType("PT");
+    expect(callAPI).toHaveBeenCalledWith("DELETE", "/product-types/PT");
+
+    const templates = await client.fetchProductTypeTemplates();
+    assert.equal(templates[0].key, "cannabis_types");
+    const applied = await client.applyProductTypeTemplate("cannabis_types");
+    assert.deepEqual(applied.skipped, ["Flower"]);
+    expect(callAPI).toHaveBeenCalledWith("POST", "/product-types/templates/cannabis_types");
   });
 });
