@@ -564,3 +564,8 @@ export interface MarketList {
   markets: Market[];
   total: number;
 }
+
+export interface MarketData {
+  name: string;
+  notes?: string | null;
+}

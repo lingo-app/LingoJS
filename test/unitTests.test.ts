@@ -553,3 +553,29 @@ describe("Product writes", () => {
     });
   });
 });
+
+describe("Market writes", () => {
+  const callAPI = jest.fn();
+  const client = new Lingo(1, "token");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (client as any).callAPI = callAPI;
+
+  beforeEach(() => {
+    callAPI.mockReset();
+    callAPI.mockResolvedValue({ market: { uuid: "M1", name: "EU" } });
+  });
+
+  it("Should create, update and delete markets", async () => {
+    const market = await client.createMarket({ name: "EU", notes: "Euro pricing" });
+    assert.equal(market.uuid, "M1");
+    expect(callAPI).toHaveBeenCalledWith("POST", "/markets", {
+      data: { name: "EU", notes: "Euro pricing" },
+    });
+
+    await client.updateMarket("M1", { notes: null });
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/markets/M1", { data: { notes: null } });
+
+    await client.deleteMarket("M1");
+    expect(callAPI).toHaveBeenCalledWith("DELETE", "/markets/M1");
+  });
+});

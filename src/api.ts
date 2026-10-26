@@ -17,6 +17,8 @@ import {
   Product,
   ProductType,
   ProductTypeList,
+  Market,
+  MarketData,
   MarketList,
   ProductCreateData,
   ProductUpdateData,
@@ -305,6 +307,40 @@ class Lingo {
   async fetchMarkets(page = 1, limit = 50, sort?: string): Promise<MarketList> {
     const res = await this.callAPI("GET", "/markets", { qs: { page, limit, sort } });
     return { markets: res.markets, total: res.total };
+  }
+
+  /**
+   * Create a market. Names are unique within a space.
+   *
+   * @param data The market's name and optional notes
+   * @returns The new market
+   */
+  async createMarket(data: MarketData): Promise<Market> {
+    const res = await this.callAPI("POST", "/markets", { data });
+    return res.market as Market;
+  }
+
+  /**
+   * Update a market's name or notes. Pass `notes: null` to clear them.
+   *
+   * @param uuid The uuid of the market
+   * @param data The properties to change
+   * @returns The updated market
+   */
+  async updateMarket(uuid: string, data: Partial<MarketData>): Promise<Market> {
+    const res = await this.callAPI("PUT", `/markets/${uuid}`, { data });
+    return res.market as Market;
+  }
+
+  /**
+   * Delete a market. Fails while any product or variant is assigned to it.
+   *
+   * @param uuid The uuid of the market
+   * @returns The deleted market
+   */
+  async deleteMarket(uuid: string): Promise<Market> {
+    const res = await this.callAPI("DELETE", `/markets/${uuid}`);
+    return res.market as Market;
   }
 
   /**
