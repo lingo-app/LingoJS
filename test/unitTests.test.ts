@@ -536,12 +536,12 @@ describe("Product writes", () => {
     assert.deepEqual(data.fields.photos, [{ asset_uuid: "A2" }]);
   });
 
-  it("Should archive and delete through DELETE", async () => {
+  it("Should archive and hide through DELETE", async () => {
     const product = await client.archiveProduct("P1");
     assert.equal(product.uuid, "P1");
     expect(callAPI).toHaveBeenCalledWith("DELETE", "/products/P1");
 
-    await client.deleteVariant("P1", "V1");
+    await client.hideVariant("P1", "V1");
     expect(callAPI).toHaveBeenCalledWith("DELETE", "/products/P1/variants/V1");
   });
 

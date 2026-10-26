@@ -378,13 +378,14 @@ class Lingo {
   }
 
   /**
-   * Delete a variant. A product always keeps at least one variant.
+   * Hide a variant. Lingo hides variants rather than deleting them; the same
+   * as updating the variant with availability "hidden".
    *
    * @param productUuid The uuid of the product
    * @param variantUuid The uuid of the variant
-   * @returns The product with its remaining variants
+   * @returns The product with the variant hidden
    */
-  async deleteVariant(productUuid: string, variantUuid: string): Promise<Product> {
+  async hideVariant(productUuid: string, variantUuid: string): Promise<Product> {
     const res = await this.callAPI("DELETE", `/products/${productUuid}/variants/${variantUuid}`);
     return res.product as Product;
   }
