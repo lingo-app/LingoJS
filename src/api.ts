@@ -344,20 +344,6 @@ class Lingo {
   }
 
   /**
-   * Add a variant to a product. Include a value for each of the product's option fields.
-   *
-   * @param productUuid The uuid of the product
-   * @param data The variant's fields, availability and market
-   * @returns The new variant
-   */
-  async createVariant(productUuid: string, data: VariantData): Promise<Variant> {
-    const res = await this.callAPI("POST", `/products/${productUuid}/variants`, {
-      data: variantBody(data),
-    });
-    return res.variant as Variant;
-  }
-
-  /**
    * Replace a variant. `fields` is the complete set of overrides; a field left
    * out reverts to the product's value.
    *

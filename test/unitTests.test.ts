@@ -546,9 +546,9 @@ describe("Product writes", () => {
   });
 
   it("Should return the variant from variant writes", async () => {
-    const variant = await client.createVariant("P1", { fields: { size: "L" } });
+    const variant = await client.updateVariant("P1", "V1", { fields: { size: "L" } });
     assert.equal(variant.uuid, "V1");
-    expect(callAPI).toHaveBeenCalledWith("POST", "/products/P1/variants", {
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/products/P1/variants/V1", {
       data: { fields: { size: "L" } },
     });
   });
