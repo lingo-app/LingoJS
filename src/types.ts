@@ -465,12 +465,6 @@ export interface ProductTypeUpdateData {
 
 export type ProductTypeFieldUpdateData = Partial<Omit<ProductTypeFieldData, "uuid" | "fieldType">>;
 
-export interface ProductTypeTemplate {
-  key: string;
-  name: string;
-  description: string;
-}
-
 export interface Market {
   id: number;
   uuid: string;

@@ -21,7 +21,6 @@ import {
   ProductTypeFieldData,
   ProductTypeFieldUpdateData,
   ProductTypeList,
-  ProductTypeTemplate,
   ProductTypeUpdateData,
   Market,
   MarketData,
@@ -393,27 +392,6 @@ class Lingo {
       `/product-types/${productTypeUuid}/fields/${fieldUuid}`
     );
     return res.productType as ProductType;
-  }
-
-  /**
-   * The product type templates Lingo can create for you.
-   */
-  async fetchProductTypeTemplates(): Promise<ProductTypeTemplate[]> {
-    const res = await this.callAPI("GET", "/product-types/templates");
-    return res.templates as ProductTypeTemplate[];
-  }
-
-  /**
-   * Create a template's product types. Types whose name already exists in the
-   * space are skipped and listed by name.
-   *
-   * @param key The template key, e.g. `cannabis_types`
-   */
-  async applyProductTypeTemplate(
-    key: string
-  ): Promise<{ productTypes: ProductType[]; skipped: string[] }> {
-    const res = await this.callAPI("POST", `/product-types/templates/${key}`);
-    return { productTypes: res.productTypes, skipped: res.skipped };
   }
 
   /**

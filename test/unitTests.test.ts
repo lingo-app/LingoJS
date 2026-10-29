@@ -591,9 +591,6 @@ describe("Product type writes", () => {
     callAPI.mockResolvedValue({
       productType: { uuid: "PT" },
       field: { uuid: "F1" },
-      productTypes: [{ uuid: "PT" }],
-      skipped: ["Flower"],
-      templates: [{ key: "cannabis_types" }],
     });
   });
 
@@ -657,7 +654,7 @@ describe("Product type writes", () => {
     });
   });
 
-  it("Should route field writes and templates", async () => {
+  it("Should route field writes", async () => {
     const field = await client.createProductTypeField("PT", {
       name: "Weight",
       fieldType: "number",
@@ -677,11 +674,5 @@ describe("Product type writes", () => {
 
     await client.deleteProductType("PT");
     expect(callAPI).toHaveBeenCalledWith("DELETE", "/product-types/PT");
-
-    const templates = await client.fetchProductTypeTemplates();
-    assert.equal(templates[0].key, "cannabis_types");
-    const applied = await client.applyProductTypeTemplate("cannabis_types");
-    assert.deepEqual(applied.skipped, ["Flower"]);
-    expect(callAPI).toHaveBeenCalledWith("POST", "/product-types/templates/cannabis_types");
   });
 });
