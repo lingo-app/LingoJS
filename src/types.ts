@@ -433,6 +433,38 @@ export interface ProductType {
   fields?: ProductTypeField[];
 }
 
+export type ProductTypeFieldOptionInput = string | { uuid?: string; value: string; label?: string };
+
+/** A field to write. Existing fields are matched by `uuid`; `fieldType` can't change once created. */
+export interface ProductTypeFieldData {
+  uuid?: string;
+  name: string;
+  /** Lowercase letters, digits and underscores; generated from the name when left out */
+  identifier?: string;
+  fieldType: ProductFieldType;
+  required?: boolean;
+  displayOrder?: number;
+  /** Select and multiselect choices; a string is both value and label */
+  options?: ProductTypeFieldOptionInput[];
+  /** Type specific settings, e.g. `{ decimals: 1 }` for a number field */
+  config?: Record<string, unknown>;
+}
+
+export interface ProductTypeCreateData {
+  name: string;
+  description?: string;
+  fields?: ProductTypeFieldData[];
+}
+
+export interface ProductTypeUpdateData {
+  name?: string;
+  description?: string | null;
+  /** The complete field list; fields left out are deleted. Fetched fields can be passed back as is. */
+  fields?: (ProductTypeFieldData | ProductTypeField)[];
+}
+
+export type ProductTypeFieldUpdateData = Partial<Omit<ProductTypeFieldData, "uuid" | "fieldType">>;
+
 export interface Market {
   id: number;
   uuid: string;
@@ -512,6 +544,44 @@ export interface Product {
   matchedVariants?: { uuid: string; optionValues: Record<string, string> }[];
 }
 
+/** A field value to write: the serialized shape, or a bare value (`"Red"`, `"22.50"`, `true`, `["s", "m"]`) */
+export type ProductFieldInput =
+  | ProductFieldValue
+  | string
+  | number
+  | boolean
+  | null
+  | string[]
+  | { assetUuid: string }[];
+
+/** Keyed by field identifier or uuid */
+export type ProductFieldsInput = Record<string, ProductFieldInput>;
+
+export interface ProductCreateData {
+  productTypeUuid: string;
+  fields: ProductFieldsInput;
+  marketUuid?: string;
+}
+
+/** A variant to write. Fields are the complete set of overrides; omit one to inherit it. */
+export interface VariantData {
+  uuid?: string;
+  fields?: ProductFieldsInput;
+  availability?: VariantAvailability;
+  marketUuid?: string | null;
+  displayOrder?: number;
+}
+
+export interface ProductUpdateData {
+  fields?: ProductFieldsInput;
+  marketUuid?: string | null;
+  status?: "active" | "archived";
+  /** The fields that drive variants, in order */
+  options?: { fieldUuid: string }[];
+  /** The complete variant list; variants left out are deleted */
+  variants?: VariantData[];
+}
+
 export interface ProductList {
   products: Product[];
   total: number;
@@ -525,4 +595,9 @@ export interface ProductTypeList {
 export interface MarketList {
   markets: Market[];
   total: number;
+}
+
+export interface MarketData {
+  name: string;
+  notes?: string | null;
 }

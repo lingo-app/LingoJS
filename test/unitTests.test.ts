@@ -5,7 +5,7 @@
 
 import { ReadStream } from "fs";
 import { strict as assert } from "assert";
-import lingo, { AssetType, ItemType, Lingo, LingoError } from "../src/index";
+import lingo, { AssetType, ItemType, Lingo, LingoError, ProductTypeField } from "../src/index";
 import {
   getUploadData,
   parseFilePath,
@@ -466,5 +466,213 @@ describe("Products", () => {
     });
     assert.equal((await client.fetchProductType("PT")).uuid, "PT");
     assert.deepEqual(await client.fetchMarkets(), { markets: [{ uuid: "M" }], total: 1 });
+  });
+});
+
+describe("Product writes", () => {
+  const callAPI = jest.fn();
+  const client = new Lingo(1, "token");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (client as any).callAPI = callAPI;
+
+  beforeEach(() => {
+    callAPI.mockReset();
+    callAPI.mockResolvedValue({ product: { uuid: "P1" }, variant: { uuid: "V1" } });
+  });
+
+  it("Should send snake_case product bodies and keep field keys verbatim", async () => {
+    await client.createProduct({
+      productTypeUuid: "PT",
+      fields: { product_name: "Jacket", Price: { value: "22.50", source: null } },
+      marketUuid: "M1",
+    });
+    expect(callAPI).toHaveBeenCalledWith("POST", "/products", {
+      data: {
+        product_type_uuid: "PT",
+        fields: { product_name: "Jacket", Price: { value: "22.50", source: null } },
+        market_uuid: "M1",
+      },
+    });
+  });
+
+  it("Should map options and variants on update", async () => {
+    await client.updateProduct("P1", {
+      status: "active",
+      marketUuid: null,
+      options: [{ fieldUuid: "F1" }],
+      variants: [
+        { uuid: "V1", fields: { size: "S" } },
+        { fields: { size: "M" }, availability: "available", displayOrder: 1 },
+      ],
+    });
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/products/P1", {
+      data: {
+        status: "active",
+        market_uuid: null,
+        options: [{ field_uuid: "F1" }],
+        variants: [
+          { uuid: "V1", fields: { size: "S" } },
+          { fields: { size: "M" }, availability: "available", display_order: 1 },
+        ],
+      },
+    });
+  });
+
+  it("Should convert asset entries back to asset_uuid", async () => {
+    await client.updateVariant("P1", "V1", {
+      fields: {
+        images: {
+          assets: [{ assetUuid: "A1", displayOrder: 0, inherited: false, asset: null }],
+          source: "override",
+        },
+        photos: [{ assetUuid: "A2" }],
+      },
+    });
+    const data = callAPI.mock.calls[0][2].data;
+    assert.deepEqual(data.fields.images, {
+      assets: [{ asset_uuid: "A1", display_order: 0, inherited: false }],
+      source: "override",
+    });
+    assert.deepEqual(data.fields.photos, [{ asset_uuid: "A2" }]);
+  });
+
+  it("Should archive and hide through DELETE", async () => {
+    const product = await client.archiveProduct("P1");
+    assert.equal(product.uuid, "P1");
+    expect(callAPI).toHaveBeenCalledWith("DELETE", "/products/P1");
+
+    await client.hideVariant("P1", "V1");
+    expect(callAPI).toHaveBeenCalledWith("DELETE", "/products/P1/variants/V1");
+  });
+
+  it("Should return the variant from variant writes", async () => {
+    const variant = await client.updateVariant("P1", "V1", { fields: { size: "L" } });
+    assert.equal(variant.uuid, "V1");
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/products/P1/variants/V1", {
+      data: { fields: { size: "L" } },
+    });
+  });
+});
+
+describe("Market writes", () => {
+  const callAPI = jest.fn();
+  const client = new Lingo(1, "token");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (client as any).callAPI = callAPI;
+
+  beforeEach(() => {
+    callAPI.mockReset();
+    callAPI.mockResolvedValue({ market: { uuid: "M1", name: "EU" } });
+  });
+
+  it("Should create, update and delete markets", async () => {
+    const market = await client.createMarket({ name: "EU", notes: "Euro pricing" });
+    assert.equal(market.uuid, "M1");
+    expect(callAPI).toHaveBeenCalledWith("POST", "/markets", {
+      data: { name: "EU", notes: "Euro pricing" },
+    });
+
+    await client.updateMarket("M1", { notes: null });
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/markets/M1", { data: { notes: null } });
+
+    await client.deleteMarket("M1");
+    expect(callAPI).toHaveBeenCalledWith("DELETE", "/markets/M1");
+  });
+});
+
+describe("Product type writes", () => {
+  const callAPI = jest.fn();
+  const client = new Lingo(1, "token");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (client as any).callAPI = callAPI;
+
+  beforeEach(() => {
+    callAPI.mockReset();
+    callAPI.mockResolvedValue({
+      productType: { uuid: "PT" },
+      field: { uuid: "F1" },
+    });
+  });
+
+  it("Should snake_case fields, options and config on create", async () => {
+    await client.createProductType({
+      name: "Apparel",
+      description: "Clothing",
+      fields: [
+        { name: "Name", fieldType: "name", required: true },
+        { name: "Size", fieldType: "select", options: ["s", { value: "m", label: "M" }] },
+        { name: "Price", fieldType: "price", config: { thousandsSeparator: true } },
+      ],
+    });
+    expect(callAPI).toHaveBeenCalledWith("POST", "/product-types", {
+      data: {
+        name: "Apparel",
+        description: "Clothing",
+        fields: [
+          { name: "Name", field_type: "name", required: true },
+          { name: "Size", field_type: "select", options: ["s", { value: "m", label: "M" }] },
+          { name: "Price", field_type: "price", config: { thousands_separator: true } },
+        ],
+      },
+    });
+  });
+
+  it("Should send fetched fields back with only their writable keys", async () => {
+    const fetched: ProductTypeField = {
+      id: 1,
+      uuid: "F1",
+      productTypeUuid: "PT",
+      name: "Size",
+      identifier: "size",
+      fieldType: "select",
+      required: false,
+      status: "active",
+      displayOrder: 10,
+      options: [{ uuid: "O1", value: "s", label: "S", displayOrder: 0 }],
+      config: {},
+      creatorId: 1,
+      dateAdded: "",
+      dateUpdated: "",
+    };
+    await client.updateProductType("PT", { description: null, fields: [fetched] });
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/product-types/PT", {
+      data: {
+        description: null,
+        fields: [
+          {
+            uuid: "F1",
+            name: "Size",
+            identifier: "size",
+            field_type: "select",
+            required: false,
+            display_order: 10,
+            options: [{ uuid: "O1", value: "s", label: "S" }],
+            config: {},
+          },
+        ],
+      },
+    });
+  });
+
+  it("Should route field writes", async () => {
+    const field = await client.createProductTypeField("PT", {
+      name: "Weight",
+      fieldType: "number",
+    });
+    assert.equal(field.uuid, "F1");
+    expect(callAPI).toHaveBeenCalledWith("POST", "/product-types/PT/fields", {
+      data: { name: "Weight", field_type: "number" },
+    });
+
+    await client.updateProductTypeField("PT", "F1", { required: true, displayOrder: 2 });
+    expect(callAPI).toHaveBeenCalledWith("PUT", "/product-types/PT/fields/F1", {
+      data: { required: true, display_order: 2 },
+    });
+
+    await client.deleteProductTypeField("PT", "F1");
+    expect(callAPI).toHaveBeenCalledWith("DELETE", "/product-types/PT/fields/F1");
+
+    await client.deleteProductType("PT");
+    expect(callAPI).toHaveBeenCalledWith("DELETE", "/product-types/PT");
   });
 });
