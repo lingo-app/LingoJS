@@ -1,7 +1,7 @@
 {
   "name": "@lingo-app/node",
   "description": "Lingo API wrapper",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "homepage": "https://github.com/lingo-app/lingojs",
   "author": "Lingo <info@lingoapp.com> (https://www.lingoapp.com/)",
   "repository": {
@@ -24,7 +24,6 @@
     "@ctrl/tinycolor": "^4.2.0",
     "btoa": "^1.2.1",
     "lodash": "^4.17.23",
-    "query-string": "^7.0.0",
     "regenerator-runtime": "^0.14.1"
   },
   "devDependencies": {
