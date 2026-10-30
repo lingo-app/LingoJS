@@ -210,6 +210,22 @@ export function encodeUnicode(value: any): string {
   return btoa(binary);
 }
 
+// Builds a query string from an object of scalar values or arrays of them,
+// without the query-string dependency. Like query-string, `undefined` entries
+// are skipped and arrays repeat the key (`ids=1&ids=2`). `null` becomes an
+// empty value (`a=`); URLSearchParams can't write a bare key.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function stringifyQuery(params: Record<string, any>): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item === undefined) continue;
+      searchParams.append(key, item === null ? "" : String(item));
+    }
+  }
+  return searchParams.toString();
+}
+
 export async function retry<T>(action: () => Promise<T>, retries = 2): Promise<T> {
   for (let i = 0; i <= retries; i++) {
     try {

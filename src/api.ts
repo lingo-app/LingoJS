@@ -1,7 +1,7 @@
-import QueryString from "query-string";
 import merge from "lodash/merge";
 
 import LingoError from "./lingoError";
+import { stringifyQuery } from "./utils";
 import {
   AssetType,
   ContentType,
@@ -16,8 +16,19 @@ import {
   CustomField,
   Product,
   ProductType,
+  ProductTypeCreateData,
+  ProductTypeField,
+  ProductTypeFieldData,
+  ProductTypeFieldUpdateData,
   ProductTypeList,
+  ProductTypeUpdateData,
+  Market,
+  MarketData,
   MarketList,
+  ProductCreateData,
+  ProductUpdateData,
+  Variant,
+  VariantData,
 } from "./types";
 import {
   formatDate,
@@ -29,7 +40,7 @@ import {
   snakeify,
 } from "./utils";
 import { Search } from "./search";
-import { ProductQuery } from "./products";
+import { ProductQuery, fieldBody, productBody, productTypeBody, variantBody } from "./products";
 import { TinyColor } from "@ctrl/tinycolor";
 import { ItemData, Upload, AssetData, AssetUpdateData, AssetReplaceData } from "./Upload";
 import { assert } from "console";
@@ -311,6 +322,97 @@ class Lingo {
   }
 
   /**
+   * Create a product type, optionally with its fields.
+   *
+   * @param data The name, description and fields
+   * @returns The product type with its fields
+   */
+  async createProductType(data: ProductTypeCreateData): Promise<ProductType> {
+    const res = await this.callAPI("POST", "/product-types", { data: productTypeBody(data) });
+    return res.productType as ProductType;
+  }
+
+  /**
+   * Update a product type. `fields` is the complete list: fields are matched
+   * by uuid, new ones are created, and fields left out are deleted along with
+   * their values. A field's type can't change.
+   *
+   * @param uuid The uuid of the product type
+   * @param data The properties to change
+   * @returns The updated product type with its fields
+   */
+  async updateProductType(uuid: string, data: ProductTypeUpdateData): Promise<ProductType> {
+    const res = await this.callAPI("PUT", `/product-types/${uuid}`, {
+      data: productTypeBody(data),
+    });
+    return res.productType as ProductType;
+  }
+
+  /**
+   * Delete a product type. Fails while any product uses it.
+   *
+   * @param uuid The uuid of the product type
+   * @returns The deleted product type
+   */
+  async deleteProductType(uuid: string): Promise<ProductType> {
+    const res = await this.callAPI("DELETE", `/product-types/${uuid}`);
+    return res.productType as ProductType;
+  }
+
+  /**
+   * Add a field to a product type.
+   *
+   * @param productTypeUuid The uuid of the product type
+   * @param data The field definition
+   * @returns The new field
+   */
+  async createProductTypeField(
+    productTypeUuid: string,
+    data: ProductTypeFieldData
+  ): Promise<ProductTypeField> {
+    const res = await this.callAPI("POST", `/product-types/${productTypeUuid}/fields`, {
+      data: fieldBody(data),
+    });
+    return res.field as ProductTypeField;
+  }
+
+  /**
+   * Update a field. Properties left out are unchanged; `options` replaces the
+   * choices, matching existing ones by uuid.
+   *
+   * @param productTypeUuid The uuid of the product type
+   * @param fieldUuid The uuid of the field
+   * @param data The properties to change
+   * @returns The updated field
+   */
+  async updateProductTypeField(
+    productTypeUuid: string,
+    fieldUuid: string,
+    data: ProductTypeFieldUpdateData
+  ): Promise<ProductTypeField> {
+    const res = await this.callAPI("PUT", `/product-types/${productTypeUuid}/fields/${fieldUuid}`, {
+      data: fieldBody(data),
+    });
+    return res.field as ProductTypeField;
+  }
+
+  /**
+   * Delete a field and its values on every product. Fails while the field
+   * drives variants on any product.
+   *
+   * @param productTypeUuid The uuid of the product type
+   * @param fieldUuid The uuid of the field
+   * @returns The product type without the field
+   */
+  async deleteProductTypeField(productTypeUuid: string, fieldUuid: string): Promise<ProductType> {
+    const res = await this.callAPI(
+      "DELETE",
+      `/product-types/${productTypeUuid}/fields/${fieldUuid}`
+    );
+    return res.productType as ProductType;
+  }
+
+  /**
    * Fetch the markets in your space
    * @param page the page of results
    * @param limit the max number of results, up to 200
@@ -319,6 +421,109 @@ class Lingo {
   async fetchMarkets(page = 1, limit = 50, sort?: string): Promise<MarketList> {
     const res = await this.callAPI("GET", "/markets", { qs: { page, limit, sort } });
     return { markets: res.markets, total: res.total };
+  }
+
+  /**
+   * Create a market. Names are unique within a space.
+   *
+   * @param data The market's name and optional notes
+   * @returns The new market
+   */
+  async createMarket(data: MarketData): Promise<Market> {
+    const res = await this.callAPI("POST", "/markets", { data });
+    return res.market as Market;
+  }
+
+  /**
+   * Update a market's name or notes. Pass `notes: null` to clear them.
+   *
+   * @param uuid The uuid of the market
+   * @param data The properties to change
+   * @returns The updated market
+   */
+  async updateMarket(uuid: string, data: Partial<MarketData>): Promise<Market> {
+    const res = await this.callAPI("PUT", `/markets/${uuid}`, { data });
+    return res.market as Market;
+  }
+
+  /**
+   * Delete a market. Fails while any product or variant is assigned to it.
+   *
+   * @param uuid The uuid of the market
+   * @returns The deleted market
+   */
+  async deleteMarket(uuid: string): Promise<Market> {
+    const res = await this.callAPI("DELETE", `/markets/${uuid}`);
+    return res.market as Market;
+  }
+
+  /**
+   * Create a product. The API creates its base variant.
+   *
+   * @param data The product type, field values and optional market
+   * @returns The product with its product type, variants and markets
+   */
+  async createProduct(data: ProductCreateData): Promise<Product> {
+    const res = await this.callAPI("POST", "/products", { data: productBody(data) });
+    return res.product as Product;
+  }
+
+  /**
+   * Update a product. Products are saved as whole objects: `fields` replaces
+   * every product value, and `variants` replaces the variant list.
+   *
+   * @param uuid The uuid of the product
+   * @param data The values to save
+   * @returns The updated product
+   */
+  async updateProduct(uuid: string, data: ProductUpdateData): Promise<Product> {
+    const res = await this.callAPI("PUT", `/products/${uuid}`, { data: productBody(data) });
+    return res.product as Product;
+  }
+
+  /**
+   * Archive a product. Its variants are retired and its kit items trashed.
+   * Update the product's status to `active` to restore it.
+   *
+   * @param uuid The uuid of the product
+   * @returns The archived product
+   */
+  async archiveProduct(uuid: string): Promise<Product> {
+    const res = await this.callAPI("DELETE", `/products/${uuid}`);
+    return res.product as Product;
+  }
+
+  /**
+   * Replace a variant. `fields` is the complete set of overrides; a field left
+   * out reverts to the product's value.
+   *
+   * @param productUuid The uuid of the product
+   * @param variantUuid The uuid of the variant
+   * @param data The variant's fields, availability and market
+   * @returns The updated variant
+   */
+  async updateVariant(
+    productUuid: string,
+    variantUuid: string,
+    data: VariantData
+  ): Promise<Variant> {
+    const res = await this.callAPI("PUT", `/products/${productUuid}/variants/${variantUuid}`, {
+      data: variantBody(data),
+    });
+    return res.variant as Variant;
+  }
+
+  /**
+   * Hide a variant. Lingo hides variants rather than deleting them; the same
+   * as updating the variant with availability "hidden".
+   *
+   * @param productUuid The uuid of the product
+   * @param variantUuid The uuid of the variant
+   * @returns The product with the variant hidden
+   */
+  async hideVariant(productUuid: string, variantUuid: string): Promise<Product> {
+    const res = await this.callAPI("DELETE", `/products/${productUuid}/variants/${variantUuid}`);
+    return res.product as Product;
   }
 
   /**
@@ -874,7 +1079,7 @@ class Lingo {
 
     let url = this.baseURL + path;
     if (qs) {
-      url = [url, QueryString.stringify(qs)].join("?");
+      url = [url, stringifyQuery(qs)].join("?");
     }
 
     // Prepare the body

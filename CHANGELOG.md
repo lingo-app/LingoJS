@@ -1,6 +1,14 @@
 # 3.4
 * Add `updateAsset` to update asset metadata
 * Add `replaceAssetFile` and `replaceAssetFromRemoteFile` to replace the file of an existing asset
+* `createProduct`, `updateProduct` and `archiveProduct`
+* `updateVariant` and `hideVariant` for editing one SKU at a time
+* `ProductCreateData`, `ProductUpdateData` and `VariantData` types; asset entries in fields may use `assetUuid`
+* `createMarket`, `updateMarket` and `deleteMarket`
+* `createProductType`, `updateProductType` and `deleteProductType`; `createProductTypeField`, `updateProductTypeField` and `deleteProductTypeField`
+
+# 3.3.1
+* Removed the `query-string` dependency (CVE-2026-45822, via its transitive `decode-uri-component`) in favor of a small internal helper built on `URLSearchParams`. No API changes.
 
 # 3.3
 * `products()` query builder for listing and filtering products, with `fetchAll` paging
