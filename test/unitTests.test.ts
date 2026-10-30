@@ -12,6 +12,7 @@ import {
   resolveFilePath,
   parseJSONResponse,
   retry,
+  stringifyQuery,
 } from "../src/utils";
 
 describe("Library exports", () => {
@@ -157,6 +158,42 @@ describe("JSON response parsing", () => {
       result: { uuid: "321", data: { parent_uuid: "123" } },
     });
     assert.deepEqual(res, { uuid: "321", data: { parentUuid: "123" } });
+  });
+});
+
+describe("stringifyQuery", () => {
+  it("Should join scalar values", () => {
+    expect(stringifyQuery({ page: 1, limit: 50, v: "2" })).toEqual("page=1&limit=50&v=2");
+  });
+
+  it("Should skip undefined values but keep falsy ones", () => {
+    expect(stringifyQuery({ sort: undefined, offset: 0, reverse: false })).toEqual(
+      "offset=0&reverse=false"
+    );
+  });
+
+  it("Should repeat the key for array values", () => {
+    expect(stringifyQuery({ ids: [1, 2], tag: ["a", undefined, "b"], none: [] })).toEqual(
+      "ids=1&ids=2&tag=a&tag=b"
+    );
+  });
+
+  it("Should write null as an empty value", () => {
+    expect(stringifyQuery({ a: null, b: [null] })).toEqual("a=&b=");
+  });
+
+  it("Should percent-encode base64 characters", () => {
+    expect(stringifyQuery({ query: "a+b/c==" })).toEqual("query=a%2Bb%2Fc%3D%3D");
+  });
+
+  it("Should encode spaces and reserved characters", () => {
+    const qs = stringifyQuery({ name: "a b&c#d" });
+    expect(qs).toEqual("name=a+b%26c%23d");
+    expect(new URLSearchParams(qs).get("name")).toEqual("a b&c#d");
+  });
+
+  it("Should return an empty string for no params", () => {
+    expect(stringifyQuery({})).toEqual("");
   });
 });
 

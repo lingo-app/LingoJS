@@ -210,15 +210,18 @@ export function encodeUnicode(value: any): string {
   return btoa(binary);
 }
 
-// Builds a query string from a flat object of scalar values, skipping
-// `undefined` entries (matches the subset of query-string's stringify
-// behavior this package actually relies on, without the extra dependency).
+// Builds a query string from an object of scalar values or arrays of them,
+// without the query-string dependency. Like query-string, `undefined` entries
+// are skipped and arrays repeat the key (`ids=1&ids=2`). `null` becomes an
+// empty value (`a=`); URLSearchParams can't write a bare key.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function stringifyQuery(params: Record<string, any>): string {
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value === undefined) continue;
-    searchParams.append(key, String(value));
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item === undefined) continue;
+      searchParams.append(key, item === null ? "" : String(item));
+    }
   }
   return searchParams.toString();
 }
