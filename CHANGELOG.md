@@ -1,3 +1,6 @@
+# 3.3.1
+* Removed the `query-string` dependency (CVE-2026-45822, via its transitive `decode-uri-component`) in favor of a small internal helper built on `URLSearchParams`. No API changes.
+
 # 3.3
 * `products()` query builder for listing and filtering products, with `fetchAll` paging
 * `fetchProduct`, `fetchProductTypes`, `fetchProductType` and `fetchMarkets`

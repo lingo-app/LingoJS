@@ -210,6 +210,19 @@ export function encodeUnicode(value: any): string {
   return btoa(binary);
 }
 
+// Builds a query string from a flat object of scalar values, skipping
+// `undefined` entries (matches the subset of query-string's stringify
+// behavior this package actually relies on, without the extra dependency).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function stringifyQuery(params: Record<string, any>): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) continue;
+    searchParams.append(key, String(value));
+  }
+  return searchParams.toString();
+}
+
 export async function retry<T>(action: () => Promise<T>, retries = 2): Promise<T> {
   for (let i = 0; i <= retries; i++) {
     try {

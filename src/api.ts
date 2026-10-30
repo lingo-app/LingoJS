@@ -1,7 +1,7 @@
-import QueryString from "query-string";
 import merge from "lodash/merge";
 
 import LingoError from "./lingoError";
+import { stringifyQuery } from "./utils";
 import {
   AssetType,
   ContentType,
@@ -792,7 +792,7 @@ class Lingo {
 
     let url = this.baseURL + path;
     if (qs) {
-      url = [url, QueryString.stringify(qs)].join("?");
+      url = [url, stringifyQuery(qs)].join("?");
     }
 
     // Prepare the body
