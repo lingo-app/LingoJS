@@ -24,7 +24,7 @@
     "typescript",
     "javascript"
   ],
-  "prettier.prettierPath": ".yarn/sdks/prettier/index.cjs",
+  "prettier.prettierPath": "node_modules/prettier",
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }
