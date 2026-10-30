@@ -42,10 +42,28 @@ import {
 import { Search } from "./search";
 import { ProductQuery, fieldBody, productBody, productTypeBody, variantBody } from "./products";
 import { TinyColor } from "@ctrl/tinycolor";
-import { ItemData, Upload, AssetData } from "./Upload";
+import { ItemData, Upload, AssetData, AssetUpdateData, AssetReplaceData } from "./Upload";
 import { assert } from "console";
 
 type KitIncludes = "use_versions" | "versions" | null;
+
+/** Convert color strings (hex, rgb, hsl, etc.) to the structured records the API expects */
+function colorRecords(colors: string[]) {
+  return colors.map(color => {
+    const c = new TinyColor(color);
+    if (!c.isValid) {
+      throw Error(`Invalid color: ${color}`);
+    }
+    const hsv = c.toHsv();
+    return {
+      hue: hsv.h,
+      saturation: hsv.s * 100,
+      brightness: hsv.v * 100,
+      alpha: hsv.a * 100,
+      coverage: 100 / colors.length,
+    };
+  });
+}
 
 class Lingo {
   baseURL = "https://api.lingoapp.com/1";
@@ -771,11 +789,7 @@ class Lingo {
     data?: Omit<AssetData, "type">,
     item?: ItemData
   ): Promise<{ asset?: Asset; item?: Item }> {
-    const c = new TinyColor(color);
-    const hsv = c.toHsv();
-    if (!c.isValid) {
-      throw Error(`Invalid color: ${color}`);
-    }
+    const colors = colorRecords([color]);
 
     const _item = prepareItemData(item, ItemType.Asset);
     const { dateAdded, dateUpdated, ...otherData } = data ?? {};
@@ -785,15 +799,7 @@ class Lingo {
       dateUpdated: formatDate(dateUpdated),
       item: _item,
       type: AssetType.Color,
-      colors: [
-        {
-          hue: hsv.h,
-          saturation: hsv.s * 100,
-          brightness: hsv.v * 100,
-          alpha: hsv.a * 100,
-          coverage: 100,
-        },
-      ],
+      colors,
     };
 
     const res = await this.callAPI("POST", "/assets", {
@@ -849,14 +855,7 @@ class Lingo {
       name: explicitName,
       ...otherData
     } = data ?? {};
-    const { type: parsedType, name: parsedName, rawExtension } = parseRemoteFileUrl(url);
-    const type = explicitType ?? parsedType ?? (await this.resolveAliasedType(rawExtension));
-    if (!type) {
-      throw new LingoError(
-        LingoError.Code.InvalidParams,
-        "Unable to determine asset type from URL. Provide type in the data object or use a URL with a recognizable file extension or format query parameter."
-      );
-    }
+    const { type, name: parsedName } = await this.resolveRemoteFileType(url, explicitType);
     const assetData = {
       ...otherData,
       sourceUrl: url,
@@ -903,8 +902,15 @@ class Lingo {
     url: string,
     data?: { type?: AssetType }
   ): Promise<{ type: AssetType; name?: string }> {
+    return await this.resolveRemoteFileType(url, data?.type);
+  }
+
+  private async resolveRemoteFileType(
+    url: string,
+    explicitType?: AssetType
+  ): Promise<{ type: AssetType; name?: string }> {
     const { type: parsedType, name, rawExtension } = parseRemoteFileUrl(url);
-    const type = data?.type ?? parsedType ?? (await this.resolveAliasedType(rawExtension));
+    const type = explicitType ?? parsedType ?? (await this.resolveAliasedType(rawExtension));
     if (!type) {
       throw new LingoError(
         LingoError.Code.InvalidParams,
@@ -912,6 +918,82 @@ class Lingo {
       );
     }
     return { type, name };
+  }
+
+  // MARK : Update / Replace Assets
+  // -------------------------------------------------------------------------------
+  /**
+   * Update the metadata of an existing asset
+   * @param assetId The identifier of the asset to update
+   * @param data The metadata fields to update (name, notes, keywords, colors, url, meta)
+   * @returns The updated asset
+   */
+  async updateAsset(assetId: string, data: AssetUpdateData): Promise<Asset> {
+    const { dateUpdated, colors, ...otherData } = data;
+    const res = await this.callAPI("PUT", `/assets/${assetId}`, {
+      data: snakeify({
+        ...otherData,
+        colors: colors && colorRecords(colors),
+        dateUpdated: formatDate(dateUpdated),
+      }),
+    });
+    return res.asset;
+  }
+
+  /**
+   * Replace the file of an existing asset with a local file.
+   * Color assets cannot be replaced by a file, the new type must be a valid replacement for the
+   * existing type, and assets with direct links can only be replaced with the same type.
+   * @param assetId The identifier of the asset to replace
+   * @param file A filepath
+   * @param data Optional metadata for the new file (type, meta, dimensions, fileUpdated)
+   * @returns The updated asset
+   */
+  async replaceAssetFile(assetId: string, file: string, data?: AssetReplaceData): Promise<Asset> {
+    let type = data?.type;
+    if (!type) {
+      const { extension } = parseFilePath(file);
+      type = await this.resolveAliasedType(extension);
+    }
+    const upload = new Upload(file, { type }, this.callAPI.bind(this));
+    // Only send the fields supported when replacing a file
+    const { type: resolvedType, meta } = upload.assetData as AssetData & {
+      meta?: Record<string, unknown>;
+    };
+    upload.assetData = {
+      type: resolvedType,
+      meta: { ...meta, ...data?.meta },
+      dimensions: data?.dimensions,
+      fileUpdated: formatDate(data?.fileUpdated),
+    } as unknown as AssetData;
+    const res = await upload.upload(undefined, { method: "PUT", path: `/assets/${assetId}` });
+    return res.asset;
+  }
+
+  /**
+   * Replace the file of an existing asset with a remote file.
+   * The same restrictions as {@link replaceAssetFile} apply.
+   * @param assetId The identifier of the asset to replace
+   * @param url The URL of the remote file
+   * @param data Optional metadata for the new file (type, meta, dimensions, fileUpdated)
+   * @returns The updated asset
+   */
+  async replaceAssetFromRemoteFile(
+    assetId: string,
+    url: string,
+    data?: AssetReplaceData
+  ): Promise<Asset> {
+    const { fileUpdated, type: explicitType, ...otherData } = data ?? {};
+    const { type } = await this.resolveRemoteFileType(url, explicitType);
+    const res = await this.callAPI("PUT", `/assets/${assetId}`, {
+      data: snakeify({
+        ...otherData,
+        sourceUrl: url,
+        type,
+        fileUpdated: formatDate(fileUpdated),
+      }),
+    });
+    return res.asset;
   }
 
   /**

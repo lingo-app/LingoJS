@@ -17,6 +17,28 @@ export type AssetData = {
   };
 };
 
+export type AssetUpdateData = {
+  name?: string;
+  notes?: string;
+  keywords?: string;
+  /** Colors for a color asset */
+  colors?: string[];
+  /** The URL of a link asset */
+  url?: string;
+  meta?: Record<string, unknown>;
+  dateUpdated?: Date;
+};
+
+export type AssetReplaceData = {
+  /** The type of the replacement file. Resolved from the file extension if omitted */
+  type?: AssetType;
+  meta?: Record<string, unknown>;
+  dimensions?: string;
+  fileUpdated?: Date;
+};
+
+export type UploadTarget = { method: string; path: string };
+
 export type ItemData = {
   kitUuid: string;
   /** Either sectionUuid OR galleryUuid is required */
@@ -97,9 +119,13 @@ export class Upload {
   /**
    * Begin the file upload.
    * @param item Optional item data to place the asset in a  kit. If no item is provided, the asset will be uploaded to the library.
+   * @param target Optional endpoint to send the asset to. Defaults to `POST /assets`.
    * @returns
    */
-  async upload(item?: ItemData & { type: ItemType }): Promise<{ item?: Item; asset?: Asset }> {
+  async upload(
+    item?: ItemData & { type: ItemType },
+    target: UploadTarget = { method: "POST", path: "/assets" }
+  ): Promise<{ item?: Item; asset?: Asset }> {
     const json: Record<string, unknown> = { ...this.assetData };
     if (item) {
       json.item = item;
@@ -109,7 +135,7 @@ export class Upload {
       await this.uploadChunks(uploadId, this.size);
       await this.completeUploadSession(uploadId, this.size);
       json.uploadId = uploadId;
-      return await this.callApi("POST", "/assets", {
+      return await this.callApi(target.method, target.path, {
         data: snakeify(json),
       });
     } else {
@@ -119,7 +145,7 @@ export class Upload {
       formData.append("asset", new Blob([fileBuffer]), filename);
       formData.append("json", JSON.stringify(snakeify(json)));
 
-      return await this.callApi("POST", "/assets", { formData });
+      return await this.callApi(target.method, target.path, { formData });
     }
   }
 

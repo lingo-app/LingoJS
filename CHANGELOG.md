@@ -1,4 +1,6 @@
 # 3.4
+* Add `updateAsset` to update asset metadata
+* Add `replaceAssetFile` and `replaceAssetFromRemoteFile` to replace the file of an existing asset
 * `createProduct`, `updateProduct` and `archiveProduct`
 * `updateVariant` and `hideVariant` for editing one SKU at a time
 * `ProductCreateData`, `ProductUpdateData` and `VariantData` types; asset entries in fields may use `assetUuid`
@@ -15,7 +17,7 @@
 * Dictionaries keyed by user-defined names (`fields`, `optionValues`) now keep their keys verbatim instead of being camelized
 
 # 3.2
-* `createAssetFromRemoteFile` to create assets from a URL
+* Add `createAssetFromRemoteFile` and `validateRemoteFileUrl` to create assets from remote URLs
 
 # 3.1
 * Add `createAssetItem` to place existing assets into kits
