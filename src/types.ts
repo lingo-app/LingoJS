@@ -189,17 +189,17 @@ export interface Item {
 // MARK : Custom Fields
 // -------------------------------------------------------------------------------
 export enum CustomFieldTypes {
-  "text" = "text",
-  "number" = "number",
-  "date" = "date",
-  "checklist" = "checklist",
-  "select" = "select",
+  text = "text",
+  number = "number",
+  date = "date",
+  checklist = "checklist",
+  select = "select",
 }
 
 export enum CustomFieldOperation {
-  "add" = "add",
-  "remove" = "remove",
-  "set" = "set",
+  add = "add",
+  remove = "remove",
+  set = "set",
 }
 
 export type CustomFieldOption = {
@@ -493,10 +493,7 @@ export type AssetFieldValue = {
   source: FieldValueSource;
 };
 export type ProductFieldValue =
-  | ScalarFieldValue
-  | SelectFieldValue
-  | MultiselectFieldValue
-  | AssetFieldValue;
+  ScalarFieldValue | SelectFieldValue | MultiselectFieldValue | AssetFieldValue;
 
 /** Keyed by `ProductTypeField.identifier` */
 export type ProductFields = Record<string, ProductFieldValue>;
@@ -546,13 +543,7 @@ export interface Product {
 
 /** A field value to write: the serialized shape, or a bare value (`"Red"`, `"22.50"`, `true`, `["s", "m"]`) */
 export type ProductFieldInput =
-  | ProductFieldValue
-  | string
-  | number
-  | boolean
-  | null
-  | string[]
-  | { assetUuid: string }[];
+  ProductFieldValue | string | number | boolean | null | string[] | { assetUuid: string }[];
 
 /** Keyed by field identifier or uuid */
 export type ProductFieldsInput = Record<string, ProductFieldInput>;

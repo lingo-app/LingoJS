@@ -16,13 +16,7 @@ import { encodeUnicode, snakeify } from "./utils";
 import { CallAPI } from "./search";
 
 export type ProductSort =
-  | "name"
-  | "product_type"
-  | "date_added"
-  | "date_updated"
-  | "options"
-  | "variants"
-  | "markets";
+  "name" | "product_type" | "date_added" | "date_updated" | "options" | "variants" | "markets";
 
 type EmptyOperator = "is_set" | "is_empty";
 type TextOperator = "contains" | EmptyOperator;
